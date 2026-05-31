@@ -3,314 +3,896 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>ICT Scanner Pro - Preview</title>
+<title>ICT Scanner Pro</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700&display=swap');
 *{box-sizing:border-box;margin:0;padding:0;}
-body{background:#080f18;font-family:'Barlow Condensed',sans-serif;color:#fff;padding:16px;}
-
-.card{background:#0d1a27;border:1px solid #1a3a5c;border-radius:10px;margin-bottom:16px;overflow:hidden;}
-.card.bear{border-color:#7a1a1a;background:#130d0d;}
-.card.bull{border-color:#1a5c2a;background:#0d1a0f;}
-
-.card-header{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;}
-.coin{display:flex;align-items:center;gap:10px;}
-.coin-icon{width:36px;height:36px;background:#1a3a5c;border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:#4a9eda;}
-.coin-name{font-size:22px;font-weight:700;letter-spacing:1px;}
-.coin-price{font-size:13px;color:#4a7a9a;margin-top:2px;}
-.badge{padding:3px 10px;border-radius:4px;font-size:12px;font-weight:700;letter-spacing:1px;}
-.badge.bear{background:#3a0a0a;color:#ff4444;border:1px solid #7a1a1a;}
-.badge.bull{background:#0a3a1a;color:#44ff88;border:1px solid #1a7a3a;}
-.score{font-size:28px;font-weight:700;color:#ff6644;}
-.score.bull{color:#44ff88;}
-.score-label{font-size:10px;color:#4a7a9a;text-align:right;}
-
-.entry-row{padding:8px 14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;border-top:1px solid #1a2a3a;}
-.entry-label{font-size:11px;color:#4a7a9a;margin-right:4px;}
-.tag{padding:2px 8px;border-radius:3px;font-size:11px;font-weight:600;}
-.tag.tf{background:#0a1f35;color:#4a9eda;border:1px solid #1a4a7a;}
-.tag.fvg{background:#1a0a35;color:#9a6aff;border:1px solid #4a2a9a;}
-.tag.ob{background:#1a2a0a;color:#6aff9a;border:1px solid #2a6a3a;}
-.tag.rsi{background:#2a1a0a;color:#ffaa44;border:1px solid #7a4a1a;}
-.tag.div-bear{background:#2a0a0a;color:#ff6666;border:1px solid #7a2a2a;}
-.tag.div-bull{background:#0a2a0a;color:#66ff88;border:1px solid #2a7a3a;}
-
-.zone-section{padding:12px 14px;border-top:1px solid #1a2a3a;}
-.zone-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
-.zone-title{display:flex;gap:6px;align-items:center;}
-.zone-label{font-size:11px;font-weight:700;padding:2px 8px;border-radius:3px;}
-.zone-label.fvg-bear{background:#2a0a0a;color:#ff6666;border:1px solid #7a2a2a;}
-.zone-label.fvg-bull{background:#0a2a1a;color:#44ff88;border:1px solid #1a7a3a;}
-.zone-label.ob{background:#1a1a2a;color:#aaaaff;border:1px solid #4a4a9a;}
-.zone-type{font-size:11px;color:#4a7a9a;}
-.bear-zone-tag{font-size:11px;font-weight:700;color:#ff4444;}
-.bull-zone-tag{font-size:11px;font-weight:700;color:#44ff88;}
-
-.price-bars{display:flex;gap:8px;margin-bottom:8px;}
-.bar{flex:1;position:relative;}
-.bar-track{height:6px;border-radius:3px;background:#1a2a3a;margin-bottom:4px;overflow:hidden;}
-.bar-fill-bear{height:100%;background:linear-gradient(90deg,#ff4444,#ff6644);border-radius:3px;}
-.bar-fill-bull{height:100%;background:linear-gradient(90deg,#44ff88,#44ffcc);border-radius:3px;}
-
-.price-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #0d1a27;}
-.price-row:last-child{border-bottom:none;}
-.price-dot{width:8px;height:8px;border-radius:50%;margin-right:8px;display:inline-block;}
-.dot-top{background:#44ff88;}
-.dot-mid{background:#ffaa44;}
-.dot-bot{background:#ff4444;}
-.price-label{font-size:12px;color:#6a9aba;display:flex;align-items:center;}
-.price-val{font-size:13px;font-weight:600;}
-.price-chg{font-size:11px;margin-left:6px;}
-.price-chg.up{color:#44ff88;}
-.price-chg.dn{color:#ff4444;}
-
-.current-price-box{background:#0a1520;border:1px solid #1a4a6a;border-radius:6px;padding:8px 12px;display:flex;justify-content:space-between;align-items:center;margin-top:8px;}
-.cp-label{font-size:11px;color:#4a7a9a;}
-.cp-val{font-size:15px;font-weight:700;color:#4adaff;}
-
-/* NEW: RSI Divergence Section */
-.rsi-section{padding:10px 14px;border-top:1px solid #1a2a3a;background:#0a0f18;}
-.rsi-header{font-size:11px;color:#ffaa44;font-weight:700;margin-bottom:8px;letter-spacing:1px;}
-.rsi-row{display:flex;justify-content:space-between;align-items:center;}
-.rsi-item{text-align:center;}
-.rsi-item-label{font-size:10px;color:#4a7a9a;margin-bottom:2px;}
-.rsi-item-val{font-size:14px;font-weight:700;}
-.rsi-div-badge{padding:3px 10px;border-radius:4px;font-size:11px;font-weight:700;}
-.rsi-div-bear{background:#2a0a0a;color:#ff6666;border:1px solid #7a2a2a;}
-.rsi-div-bull{background:#0a2a1a;color:#44ff88;border:1px solid #1a7a3a;}
-
-/* NEW: Trade Plan Section */
-.trade-section{padding:10px 14px;border-top:1px solid #1a2a3a;background:#080d14;}
-.trade-header{font-size:11px;color:#aaaaff;font-weight:700;margin-bottom:8px;letter-spacing:1px;}
-.trade-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
-.trade-item{background:#0d1520;border-radius:6px;padding:8px;text-align:center;}
-.trade-item-label{font-size:10px;color:#4a7a9a;margin-bottom:3px;}
-.trade-item-val{font-size:13px;font-weight:700;}
-.entry-val{color:#4adaff;}
-.sl-val{color:#ff4444;}
-.tp-val{color:#44ff88;}
-.rrr-badge{grid-column:span 3;background:#1a1a0a;border:1px solid #6a6a1a;border-radius:6px;padding:6px;text-align:center;font-size:13px;font-weight:700;color:#ffff44;}
-
-.toggle-btn{width:100%;padding:8px;background:#0a1520;border:none;color:#4a7a9a;font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer;border-top:1px solid #1a2a3a;}
+body{background:#080f18;font-family:'Barlow Condensed',sans-serif;}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+input::placeholder{color:#2a5a7a;}
+input{outline:none;}
+a{text-decoration:none;}
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-track{background:#040c14;}
+::-webkit-scrollbar-thumb{background:#0d3060;border-radius:2px;}
 </style>
 </head>
 <body>
+<div id="root"></div>
 
-<div style="text-align:center;margin-bottom:16px;">
-  <div style="font-size:11px;color:#4a7a9a;margin-bottom:4px;">🔵 PREVIEW MOCKUP — Bagong Features</div>
-  <div style="font-size:16px;font-weight:700;color:#4adaff;">ICT SCANNER PRO v2</div>
-</div>
+<script type="text/babel">
+const { useState, useEffect, useRef } = React;
 
-<!-- BNB BEAR CARD -->
-<div class="card bear">
-  <div class="card-header">
-    <div class="coin">
-      <div class="coin-icon">S</div>
-      <div>
-        <div style="display:flex;align-items:center;gap:8px;">
-          <span class="coin-name">BNB</span>
-          <span style="color:#4a7a9a;font-size:14px;">/USDT</span>
-          <span class="badge bear">▼ BEAR</span>
+// ═══════════════════════════════════════════
+// CONFIG — i-set false para sa live Binance
+// ═══════════════════════════════════════════
+const DEMO_MODE = false;  // <-- false = live na
+
+const WATCHLIST = [
+  "SOLUSDT","TAOUSDT","SUIUSDT","XAUTUSDT",
+  "ETHUSDT","ZECUSDT",
+  "BTCUSDT","BNBUSDT","AVAXUSDT","LINKUSDT","INJUSDT",
+  "ARBUSDT","OPUSDT","DOTUSDT","NEARUSDT","APTUSDT"
+];
+
+const TV_IV  = {"1W":"W","1D":"D","4H":"240","1H":"60","30M":"30","15M":"15","1M":"1"};
+const TF_MAP = {"1W":"1w","1D":"1d","4H":"4h","1H":"1h","30M":"30m","15M":"15m","1M":"1m"};
+
+function fmt(p){
+  if(!p&&p!==0)return"—";
+  if(p<0.0001)return p.toFixed(8);
+  if(p<0.01)return p.toFixed(6);
+  if(p<1)return p.toFixed(4);
+  if(p<100)return p.toFixed(3);
+  return p.toFixed(2);
+}
+function phtNow(){
+  return new Date().toLocaleTimeString("en-PH",{timeZone:"Asia/Manila",hour12:true});
+}
+function tvLink(symbol,tf){
+  return`https://www.tradingview.com/chart/?symbol=${encodeURIComponent("BINANCE:"+symbol+".P")}&interval=${TV_IV[tf]||"15"}`;
+}
+
+// ═══════════════════════════════════════════
+// MOCK DATA (kapag DEMO_MODE = true)
+// ═══════════════════════════════════════════
+const MOCK_FVG = [
+  {symbol:"BTCUSDT",price:68420.50,dir:"BULL",htfTF:"1D",zoneType:"FVG",zoneDir:"bull",
+   zoneTop:69800,zoneBot:67500,zoneMid:68650,zoneFormed:"May 28",
+   ltfTF:"1H",pattern:"RGR",inFVG:true,score:80,
+   tvHTF:tvLink("BTCUSDT","1D"),tvLTF:tvLink("BTCUSDT","1H")},
+  {symbol:"ETHUSDT",price:3621.20,dir:"BULL",htfTF:"4H",zoneType:"OB",zoneDir:"bull",
+   zoneTop:3700,zoneBot:3580,zoneMid:3640,zoneFormed:"May 29",
+   ltfTF:"30M",pattern:"RGR",inFVG:false,score:55,
+   tvHTF:tvLink("ETHUSDT","4H"),tvLTF:tvLink("ETHUSDT","30M")},
+  {symbol:"SOLUSDT",price:172.40,dir:"BEAR",htfTF:"1D",zoneType:"FVG",zoneDir:"bear",
+   zoneTop:178,zoneBot:171.5,zoneMid:174.75,zoneFormed:"May 27",
+   ltfTF:"15M",pattern:"GRG",inFVG:true,score:65,
+   tvHTF:tvLink("SOLUSDT","1D"),tvLTF:tvLink("SOLUSDT","15M")},
+];
+const MOCK_SWEEP = [
+  {symbol:"BNBUSDT",price:608.30,dir:"BULL",sweptLevel:605.10,
+   obHigh:610.20,obLow:604.80,obOpen:605.50,obClose:609.90,obTime:"9:15 AM",
+   tv15m:tvLink("BNBUSDT","15M"),tv1m:tvLink("BNBUSDT","1M")},
+  {symbol:"AVAXUSDT",price:38.42,dir:"BEAR",sweptLevel:39.10,
+   obHigh:39.25,obLow:37.90,obOpen:38.10,obClose:39.00,obTime:"8:47 AM",
+   tv15m:tvLink("AVAXUSDT","15M"),tv1m:tvLink("AVAXUSDT","1M")},
+];
+
+// ═══════════════════════════════════════════
+// BINANCE FETCH
+// ═══════════════════════════════════════════
+async function klines(symbol,tf,limit=50){
+  const iv=TF_MAP[tf];
+  const urls=[
+    `https://fapi.binance.com/fapi/v1/klines?symbol=${symbol}&interval=${iv}&limit=${limit}`,
+    `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${iv}&limit=${limit}`,
+  ];
+  for(const url of urls){
+    try{
+      const ctrl=new AbortController();
+      const timer=setTimeout(()=>ctrl.abort(),5000); // 5s timeout
+      const r=await fetch(url,{signal:ctrl.signal});
+      clearTimeout(timer);
+      if(!r.ok)continue;
+      const d=await r.json();
+      if(!Array.isArray(d)||d.length<4)continue;
+      return d.map(k=>({open:+k[1],high:+k[2],low:+k[3],close:+k[4],time:k[0]}));
+    }catch{}
+  }
+  return null;
+}
+
+// ═══════════════════════════════════════════
+// FVG / OB DETECTORS
+// ═══════════════════════════════════════════
+function detectFVG(c){
+  const z=[];
+  for(let i=2;i<c.length;i++){
+    const a=c[i-2],b=c[i];
+    const d=new Date(b.time).toLocaleDateString("en-PH",{month:"short",day:"numeric"});
+    if(b.low>a.high)z.push({type:"bull",src:"FVG",top:b.low,bot:a.high,mid:(b.low+a.high)/2,formed_at:d});
+    if(b.high<a.low)z.push({type:"bear",src:"FVG",top:a.low,bot:b.high,mid:(a.low+b.high)/2,formed_at:d});
+  }
+  return z;
+}
+function detectOB(c){
+  const z=[];
+  for(let i=1;i<c.length-1;i++){
+    const p=c[i],n=c[i+1];
+    const d=new Date(p.time).toLocaleDateString("en-PH",{month:"short",day:"numeric"});
+    const up=(n.close-n.open)/n.open>0.004;
+    const dn=(n.open-n.close)/n.open>0.004;
+    if(p.close<p.open&&up)z.push({type:"bull",src:"OB",top:p.open,bot:p.close,mid:(p.open+p.close)/2,formed_at:d});
+    if(p.close>p.open&&dn)z.push({type:"bear",src:"OB",top:p.close,bot:p.open,mid:(p.close+p.open)/2,formed_at:d});
+  }
+  return z;
+}
+function inZone(price,z,buf=0.003){
+  return price>=z.bot*(1-buf)&&price<=z.top*(1+buf);
+}
+function isRGR(c){const s=c.slice(-4);return s[0].close<s[1].close&&s[1].close>s[2].close&&s[2].close<s[3].close;}
+function isGRG(c){const s=c.slice(-4);return s[0].close>s[1].close&&s[1].close<s[2].close&&s[2].close>s[3].close;}
+
+const FS={"1W":40,"1D":30,"4H":20};
+const LS={"1H":20,"30M":15,"15M":10};
+const ZS={"FVG":20,"OB":10};
+function fvgScore(h,l,z,rsiDiv){return(FS[h]||10)+(LS[l]||5)+(ZS[z]||5)+(rsiDiv?25:0);}
+
+// ═══════════════════════════════════════════
+// RSI CALCULATION
+// ═══════════════════════════════════════════
+function calcRSI(c,period=14){
+  if(c.length<period+1)return null;
+  let gains=0,losses=0;
+  for(let i=1;i<=period;i++){
+    const d=c[i].close-c[i-1].close;
+    if(d>0)gains+=d; else losses+=Math.abs(d);
+  }
+  let avgG=gains/period,avgL=losses/period;
+  for(let i=period+1;i<c.length;i++){
+    const d=c[i].close-c[i-1].close;
+    avgG=(avgG*(period-1)+(d>0?d:0))/period;
+    avgL=(avgL*(period-1)+(d<0?Math.abs(d):0))/period;
+  }
+  if(avgL===0)return 100;
+  return 100-(100/(1+avgG/avgL));
+}
+
+function detectRSIDivergence(c){
+  // Need at least 30 candles
+  if(c.length<30)return null;
+  const recent=c.slice(-30);
+  // Split into two halves to compare
+  const half=Math.floor(recent.length/2);
+  const first=recent.slice(0,half);
+  const second=recent.slice(half);
+  const rsi1=calcRSI(first);
+  const rsi2=calcRSI(second);
+  if(!rsi1||!rsi2)return null;
+  const price1=Math.max(...first.map(x=>x.high));
+  const price2=Math.max(...second.map(x=>x.high));
+  const priceLow1=Math.min(...first.map(x=>x.low));
+  const priceLow2=Math.min(...second.map(x=>x.low));
+  // Bearish divergence: price higher high, RSI lower high
+  if(price2>price1&&rsi2<rsi1-2)return{type:"bear",rsi:rsi2.toFixed(1),priceAction:"Higher High",rsiAction:"Lower High"};
+  // Bullish divergence: price lower low, RSI higher low
+  if(priceLow2<priceLow1&&rsi2>rsi1+2)return{type:"bull",rsi:rsi2.toFixed(1),priceAction:"Lower Low",rsiAction:"Higher Low"};
+  return null;
+}
+
+// ═══════════════════════════════════════════
+// 1W TREND DIRECTION — improved
+// ═══════════════════════════════════════════
+function get1WTrend(c){
+  if(c.length<8)return"neutral";
+  // Use last 8 weekly candles
+  const recent=c.slice(-8);
+  // Count bullish vs bearish closes
+  let bullCount=0,bearCount=0;
+  for(let i=1;i<recent.length;i++){
+    if(recent[i].close>recent[i-1].close)bullCount++;
+    else if(recent[i].close<recent[i-1].close)bearCount++;
+  }
+  // Need strong majority (5+) to call trend
+  if(bullCount>=5)return"bull";
+  if(bearCount>=5)return"bear";
+  return"neutral"; // sideways — not counter-trend
+}
+
+// ═══════════════════════════════════════════
+// TRADE PLAN 1:3 RRR
+// ═══════════════════════════════════════════
+function getGrade(score){
+  if(score>=85)return{grade:"S",label:"⭐ S-GRADE",rrr:3,rrrLabel:"1:3",color:"#22c55e",bg:"#0a2a0a",border:"#22c55e"};
+  if(score>=70)return{grade:"A",label:"🔵 A-GRADE",rrr:2,rrrLabel:"1:2",color:"#4adaff",bg:"#0a1a3a",border:"#1a4a8a"};
+  if(score>=50)return{grade:"B",label:"⚠️ B-GRADE",rrr:1,rrrLabel:"1:1",color:"#ffaa44",bg:"#1a1200",border:"#5a4a00"};
+  return{grade:"C",label:"❌ C-GRADE",rrr:0,rrrLabel:"SKIP",color:"#ef4444",bg:"#1a0a0a",border:"#7a1a1a"};
+}
+function calcTradePlan(dir,zoneTop,zoneBot,price,score){
+  const g=getGrade(score);
+  if(g.rrr===0)return null;
+  const buf=0.002;
+  if(dir==="BEAR"){
+    const entry=zoneTop*(1+buf);
+    const sl=entry*(1+0.025);
+    const risk=sl-entry;
+    const tp=entry-(risk*g.rrr);
+    return{entry,sl,tp,rrr:g.rrr,rrrLabel:g.rrrLabel,risk:((sl-entry)/entry*100).toFixed(2),reward:((entry-tp)/entry*100).toFixed(2)};
+  }else{
+    const entry=zoneBot*(1-buf);
+    const sl=entry*(1-0.025);
+    const risk=entry-sl;
+    const tp=entry+(risk*g.rrr);
+    return{entry,sl,tp,rrr:g.rrr,rrrLabel:g.rrrLabel,risk:((entry-sl)/entry*100).toFixed(2),reward:((tp-entry)/entry*100).toFixed(2)};
+  }
+}
+
+async function scanFVGLive(symbol){
+  // Step 1+2 combined: HTF scan (1W fetch also gives us trend)
+  let hit=null;
+  let weeklyTrend="neutral";
+  for(const tf of["1W","1D","4H"]){
+    const c=await klines(symbol,tf,50);
+    if(!c)continue;
+    // Get 1W trend from the 1W candles (no extra fetch needed)
+    if(tf==="1W")weeklyTrend=get1WTrend(c);
+    const price=c.at(-1).close;
+    const allZones=[...detectFVG(c),...detectOB(c)];
+    const z=allZones.find(z=>{
+      if(!inZone(price,z))return false;
+      // Only block if strong trend against zone (not neutral)
+      if(weeklyTrend==="bear"&&z.type==="bull")return false;
+      if(weeklyTrend==="bull"&&z.type==="bear")return false;
+      return true;
+    });
+    if(z){hit={tf,zone:z,price};break;}
+  }
+  if(!hit)return null;
+
+  // Step 3: LTF pattern (1 fetch only — stop at first match)
+  let ltf=null;
+  for(const tf of["1H","30M","15M"]){
+    const c=await klines(symbol,tf,20);
+    if(!c)continue;
+    if(isRGR(c)){ltf={tf,pattern:"RGR",dir:"bull"};break;}
+    if(isGRG(c)){ltf={tf,pattern:"GRG",dir:"bear"};break;}
+  }
+  if(!ltf)return null;
+
+  // Step 4: RSI Divergence — 4H only (1 fetch, skip 1H to save calls)
+  let rsiDiv=null,rsiTF=null;
+  const cRsi=await klines(symbol,"4H",40);
+  if(cRsi){
+    const div=detectRSIDivergence(cRsi);
+    if(div){rsiDiv=div;rsiTF="4H";}
+  }
+
+  const z=hit.zone;
+  const dir=ltf.dir==="bull"?"BULL":"BEAR";
+  const sc=fvgScore(hit.tf,ltf.tf,z.src,!!rsiDiv);
+  const tradePlan=calcTradePlan(dir,z.top,z.bot,hit.price,sc);
+
+  return{
+    symbol,price:hit.price,dir,
+    htfTF:hit.tf,zoneType:z.src,zoneDir:z.type,
+    zoneTop:z.top,zoneBot:z.bot,zoneMid:z.mid,zoneFormed:z.formed_at,
+    ltfTF:ltf.tf,pattern:ltf.pattern,inFVG:z.src==="FVG",
+    weeklyTrend,rsiDiv,rsiTF,tradePlan,score:sc,
+    tvHTF:tvLink(symbol,hit.tf),tvLTF:tvLink(symbol,ltf.tf),
+  };
+}
+
+// ═══════════════════════════════════════════
+// SWEEP + OUTSIDE BAR DETECTORS
+// ═══════════════════════════════════════════
+function detectSweep(c){
+  if(c.length<3)return null;
+  const prev=c.at(-3),sw=c.at(-2);
+  if(sw.low<prev.low&&sw.close>prev.low)return{dir:"bull",sweptLevel:prev.low};
+  if(sw.high>prev.high&&sw.close<prev.high)return{dir:"bear",sweptLevel:prev.high};
+  return null;
+}
+function detectOB1m(c){
+  // Palaging GREEN outside bar para sa bull at bear
+  for(let i=c.length-1;i>=Math.max(1,c.length-5);i--){
+    const cur=c[i],prev=c[i-1];
+    if(cur.high>prev.high&&cur.low<prev.low&&cur.close>cur.open)return cur;
+  }
+  return null;
+}
+async function scanSweepLive(symbol){
+  const c15=await klines(symbol,"15M",10);
+  if(!c15)return null;
+  const sweep=detectSweep(c15);
+  if(!sweep)return null;
+  const c1=await klines(symbol,"1M",20);
+  if(!c1)return null;
+  const ob=detectOB1m(c1);
+  if(!ob)return null;
+  const price=c15.at(-1).close;
+  return{
+    symbol,price,dir:sweep.dir==="bull"?"BULL":"BEAR",
+    sweptLevel:sweep.sweptLevel,
+    obHigh:ob.high,obLow:ob.low,obOpen:ob.open,obClose:ob.close,
+    obTime:new Date(ob.time).toLocaleTimeString("en-PH",{timeZone:"Asia/Manila",hour12:true,hour:"numeric",minute:"2-digit"}),
+    tv15m:tvLink(symbol,"15M"),tv1m:tvLink(symbol,"1M"),
+  };
+}
+
+// ═══════════════════════════════════════════
+// TELEGRAM
+// ═══════════════════════════════════════════
+async function tgSend(token,chatId,type,a){
+  const sym=a.symbol.replace("USDT","");
+  const msg=type==="fvg"
+    ?`🎯 *FVG SCANNER*\n📌 *${sym}/USDT* — ${a.dir==="BULL"?"▲ BULLISH":"▼ BEARISH"}\n💲 \`$${fmt(a.price)}\`\n📍 *${a.htfTF} ${a.zoneType}* | Formed: ${a.zoneFormed}\n  TOP: \`$${fmt(a.zoneTop)}\` | MID: \`$${fmt(a.zoneMid)}\` | BOT: \`$${fmt(a.zoneBot)}\`\n📊 *${a.ltfTF} ${a.pattern}* | Score: *${a.score}*\n📈 [${a.htfTF} Chart](${a.tvHTF}) | 📊 [${a.ltfTF} Chart](${a.tvLTF})`
+    :`${a.dir==="BULL"?"🟢":"🔴"} *SWEEP + OUTSIDE BAR*\n📌 *${sym}/USDT* — ${a.dir==="BULL"?"▲ BULLISH":"▼ BEARISH"}\n💲 \`$${fmt(a.price)}\`\n🔍 *15M* ${a.dir==="BULL"?"Low":"High"} swept: \`$${fmt(a.sweptLevel)}\`\n📊 *1M GREEN Outside Bar* @ ${a.obTime}\n  H:\`$${fmt(a.obHigh)}\` O:\`$${fmt(a.obOpen)}\` C:\`$${fmt(a.obClose)}\` L:\`$${fmt(a.obLow)}\`\n⚠️ Ikaw ang bahala sa entry!\n📈 [15M](${a.tv15m}) | 📊 [1M](${a.tv1m})`;
+  try{
+    await fetch(`https://api.telegram.org/bot${token}/sendMessage`,{
+      method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({chat_id:chatId,text:msg,parse_mode:"Markdown",disable_web_page_preview:true}),
+    });
+  }catch{}
+}
+
+// ═══════════════════════════════════════════
+// UI COMPONENTS
+// ═══════════════════════════════════════════
+function CandleIcon({pattern}){
+  const b=pattern==="RGR";
+  return(
+    <svg width="34" height="22" viewBox="0 0 34 22">
+      <rect x="2"  y={b?10:4}  width="6" height={b?10:6}  fill={b?"#ef4444":"#22c55e"} rx="1"/>
+      <line x1="5"  y1={b?10:4}  x2="5"  y2={b?7:2}   stroke={b?"#ef4444":"#22c55e"} strokeWidth="1"/>
+      <line x1="5"  y1={b?20:10} x2="5"  y2={b?22:12} stroke={b?"#ef4444":"#22c55e"} strokeWidth="1"/>
+      <rect x="14" y={b?4:7}   width="6" height={b?16:12} fill={b?"#22c55e":"#ef4444"} rx="1"/>
+      <line x1="17" y1={b?4:7}   x2="17" y2={b?2:5}   stroke={b?"#22c55e":"#ef4444"} strokeWidth="1"/>
+      <line x1="17" y1={b?20:19} x2="17" y2={b?22:21} stroke={b?"#22c55e":"#ef4444"} strokeWidth="1"/>
+      <rect x="26" y={b?8:4}   width="6" height={b?10:16} fill={b?"#22c55e":"#ef4444"} rx="1"/>
+      <line x1="29" y1={b?8:4}   x2="29" y2={b?5:2}   stroke={b?"#22c55e":"#ef4444"} strokeWidth="1"/>
+      <line x1="29" y1={b?18:20} x2="29" y2={b?20:22} stroke={b?"#22c55e":"#ef4444"} strokeWidth="1"/>
+    </svg>
+  );
+}
+
+function OutsideBarIcon(){
+  return(
+    <svg width="38" height="24" viewBox="0 0 38 24">
+      <line x1="9" y1="5" x2="9" y2="19" stroke="#4a6a7a" strokeWidth="1"/>
+      <rect x="5" y="9" width="8" height="8" fill="#4a6a7a" rx="1"/>
+      <text x="14" y="15" fontSize="9" fill="#4a6a7a">→</text>
+      <line x1="27" y1="2" x2="27" y2="22" stroke="#22c55e" strokeWidth="1.5"/>
+      <rect x="22" y="6" width="10" height="12" fill="#22c55e" rx="1"/>
+    </svg>
+  );
+}
+
+function ZoneBox({a}){
+  const b=a.dir==="BULL";
+  const tC=b?"#ef4444":"#22c55e";
+  const bC=b?"#22c55e":"#ef4444";
+  const mC="#f59e0b";
+  const pct=v=>{const d=(v-a.price)/a.price*100;return(d>=0?"+":"")+d.toFixed(2)+"%";};
+  return(
+    <div style={{background:"#040c14",border:"1px solid #0d2035",borderRadius:8,padding:"10px 12px",marginTop:8,animation:"fadeIn .3s"}}>
+      <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:8}}>
+        <span style={{fontSize:10,fontWeight:700,background:a.zoneType==="FVG"?"#0a1a3a":"#1a0a30",
+          border:`1px solid ${a.zoneType==="FVG"?"#1a4a8a":"#3a1a7a"}`,
+          color:a.zoneType==="FVG"?"#60a0ff":"#a060ff",borderRadius:3,padding:"2px 7px"}}>{a.zoneType}</span>
+        <span style={{fontSize:10,fontWeight:700,background:"#0a1a2a",border:"1px solid #1a3a5a",
+          color:"#00e5ff",borderRadius:3,padding:"2px 7px"}}>{a.htfTF}</span>
+        <span style={{fontSize:10,color:"#2a5a7a"}}>Formed: {a.zoneFormed}</span>
+        <span style={{marginLeft:"auto",fontSize:9,color:b?"#22c55e":"#ef4444",fontWeight:700}}>{b?"BULL":"BEAR"} ZONE</span>
+      </div>
+      <div style={{display:"flex",gap:10}}>
+        <div style={{width:5,borderRadius:3,background:`linear-gradient(to bottom,${tC},${mC},${bC})`}}/>
+        <div style={{flex:1,display:"flex",flexDirection:"column",gap:5}}>
+          {[["TOP",a.zoneTop,tC],["MID 50%",a.zoneMid,mC],["BOT",a.zoneBot,bC]].map(([l,v,c])=>(
+            <div key={l} style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+              <div style={{display:"flex",alignItems:"center",gap:5}}>
+                <span style={{width:6,height:6,borderRadius:"50%",background:c,display:"inline-block"}}/>
+                <span style={{fontSize:10,color:"#4a6a7a"}}>{l}</span>
+              </div>
+              <div style={{display:"flex",gap:8}}>
+                <span style={{fontFamily:"monospace",fontSize:12,color:"#e2e8f0",fontWeight:700}}>${fmt(v)}</span>
+                <span style={{fontFamily:"monospace",fontSize:10,color:c}}>{pct(v)}</span>
+              </div>
+            </div>
+          ))}
+          <div style={{padding:"4px 8px",background:"#0a1a2a",borderRadius:4,
+            display:"flex",justifyContent:"space-between",border:"1px dashed #1a3a5a",marginTop:2}}>
+            <span style={{fontSize:9,color:"#2a5a7a"}}>CURRENT PRICE</span>
+            <span style={{fontFamily:"monospace",fontSize:12,color:"#00e5ff",fontWeight:700}}>${fmt(a.price)}</span>
+          </div>
         </div>
-        <div class="coin-price">$724.17</div>
       </div>
-    </div>
-    <div>
-      <div class="score">75</div>
-      <div class="score-label">SCORE</div>
-    </div>
-  </div>
-
-  <div class="entry-row">
-    <span class="entry-label">ENTRY:</span>
-    <span class="tag tf">30M</span>
-    <span style="display:flex;gap:2px;align-items:center;">
-      <span style="color:#ff4444;font-size:16px;">▮▮▮</span>
-    </span>
-    <span class="tag fvg">●FVG</span>
-    <span class="tag ob">1W OB</span>
-    <span class="tag rsi">RSI DIV</span>
-  </div>
-
-  <!-- BEARISH FVG ZONE (Fixed!) -->
-  <div class="zone-section">
-    <div class="zone-header">
-      <div class="zone-title">
-        <span class="zone-label fvg-bear">FVG</span>
-        <span class="zone-label" style="background:#0a0a2a;color:#aaaaff;border:1px solid #3a3a7a;">1W</span>
-        <span class="zone-type">Formed: Feb 2</span>
+      <div style={{marginTop:8,fontSize:9,color:"#1a4a6a",fontFamily:"monospace"}}>
+        📌 Plot on {a.htfTF} chart · BOT → TOP · Mark MID line
       </div>
-      <span class="bear-zone-tag">BEAR FVG ✓</span>
-    </div>
-    <div class="price-row">
-      <span class="price-label"><span class="price-dot dot-top"></span>TOP</span>
-      <div><span class="price-val">$738.00</span><span class="price-chg dn">+1.9%</span></div>
-    </div>
-    <div class="price-row">
-      <span class="price-label"><span class="price-dot dot-mid"></span>MID 50%</span>
-      <div><span class="price-val">$691.50</span><span class="price-chg dn">-4.5%</span></div>
-    </div>
-    <div class="price-row">
-      <span class="price-label"><span class="price-dot dot-bot"></span>BOT</span>
-      <div><span class="price-val">$645.00</span><span class="price-chg dn">-10.9%</span></div>
-    </div>
-    <div class="current-price-box">
-      <span class="cp-label">CURRENT PRICE</span>
-      <span class="cp-val">$724.17</span>
-    </div>
-  </div>
-
-  <!-- RSI DIVERGENCE (NEW!) -->
-  <div class="rsi-section">
-    <div class="rsi-header">📊 RSI DIVERGENCE (4H)</div>
-    <div class="rsi-row">
-      <div class="rsi-item">
-        <div class="rsi-item-label">RSI VALUE</div>
-        <div class="rsi-item-val" style="color:#ffaa44;">58.3</div>
-      </div>
-      <div class="rsi-item">
-        <div class="rsi-item-label">PRICE ACTION</div>
-        <div class="rsi-item-val" style="color:#ff4444;">Higher High</div>
-      </div>
-      <div class="rsi-item">
-        <div class="rsi-item-label">RSI ACTION</div>
-        <div class="rsi-item-val" style="color:#ff4444;">Lower High</div>
-      </div>
-      <div class="rsi-item">
-        <div class="rsi-item-label">SIGNAL</div>
-        <span class="rsi-div-badge rsi-div-bear">BEARISH DIV ✓</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- TRADE PLAN (NEW!) -->
-  <div class="trade-section">
-    <div class="trade-header">🎯 TRADE PLAN — 1:3 RRR</div>
-    <div class="trade-grid">
-      <div class="trade-item">
-        <div class="trade-item-label">ENTRY</div>
-        <div class="trade-item-val entry-val">$738.00</div>
-      </div>
-      <div class="trade-item">
-        <div class="trade-item-label">STOP LOSS</div>
-        <div class="trade-item-val sl-val">$755.00</div>
-      </div>
-      <div class="trade-item">
-        <div class="trade-item-label">TAKE PROFIT</div>
-        <div class="trade-item-val tp-val">$687.00</div>
-      </div>
-      <div class="rrr-badge">⚡ RISK:REWARD = 1:3 (17pts risk → 51pts reward)</div>
-    </div>
-  </div>
-
-  <button class="toggle-btn">▲ ITAGO ANG ZONE PRICES</button>
-</div>
-
-<!-- ZEC BULL CARD -->
-<div class="card bull">
-  <div class="card-header">
-    <div class="coin">
-      <div class="coin-icon" style="color:#44ff88;background:#0a2a1a;">S</div>
-      <div>
-        <div style="display:flex;align-items:center;gap:8px;">
-          <span class="coin-name">ZEC</span>
-          <span style="color:#4a7a9a;font-size:14px;">/USDT</span>
-          <span class="badge bull">▲ BULL</span>
+      {/* RSI DIVERGENCE */}
+      {a.rsiDiv&&(
+        <div style={{marginTop:10,background:"#0a0f1a",border:"1px solid #1a3a1a",borderRadius:7,padding:"8px 10px"}}>
+          <div style={{fontSize:10,color:"#ffaa44",letterSpacing:1.5,fontWeight:700,marginBottom:6}}>📊 RSI DIVERGENCE ({a.rsiTF})</div>
+          <div style={{display:"flex",justifyContent:"space-between",flexWrap:"wrap",gap:6}}>
+            <div style={{textAlign:"center"}}>
+              <div style={{fontSize:9,color:"#4a7a9a",marginBottom:2}}>RSI</div>
+              <div style={{fontSize:14,fontWeight:700,color:"#ffaa44",fontFamily:"monospace"}}>{a.rsiDiv.rsi}</div>
+            </div>
+            <div style={{textAlign:"center"}}>
+              <div style={{fontSize:9,color:"#4a7a9a",marginBottom:2}}>PRICE</div>
+              <div style={{fontSize:11,fontWeight:700,color:a.rsiDiv.type==="bear"?"#ef4444":"#22c55e"}}>{a.rsiDiv.priceAction}</div>
+            </div>
+            <div style={{textAlign:"center"}}>
+              <div style={{fontSize:9,color:"#4a7a9a",marginBottom:2}}>RSI</div>
+              <div style={{fontSize:11,fontWeight:700,color:a.rsiDiv.type==="bear"?"#ef4444":"#22c55e"}}>{a.rsiDiv.rsiAction}</div>
+            </div>
+            <div style={{textAlign:"center"}}>
+              <div style={{fontSize:9,color:"#4a7a9a",marginBottom:2}}>SIGNAL</div>
+              <div style={{fontSize:10,fontWeight:700,padding:"2px 7px",borderRadius:4,
+                background:a.rsiDiv.type==="bear"?"#2a0a0a":"#0a2a0a",
+                border:`1px solid ${a.rsiDiv.type==="bear"?"#7a2a2a":"#2a7a2a"}`,
+                color:a.rsiDiv.type==="bear"?"#ff6666":"#44ff88"}}>
+                {a.rsiDiv.type==="bear"?"▼ BEAR DIV":"▲ BULL DIV"}
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="coin-price">$559.91</div>
+      )}
+      {/* TRADE PLAN 1:3 RRR */}
+      {a.tradePlan&&(
+        <div style={{marginTop:10,background:"#080d14",border:"1px solid #1a1a3a",borderRadius:7,padding:"8px 10px"}}>
+          <div style={{fontSize:10,color:"#aaaaff",letterSpacing:1.5,fontWeight:700,marginBottom:8}}>🎯 TRADE PLAN — {a.tradePlan.rrrLabel} RRR</div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,marginBottom:6}}>
+            {[
+              {l:"ENTRY",v:a.tradePlan.entry,c:"#4adaff"},
+              {l:"STOP LOSS",v:a.tradePlan.sl,c:"#ef4444"},
+              {l:"TAKE PROFIT",v:a.tradePlan.tp,c:"#22c55e"},
+            ].map(({l,v,c})=>(
+              <div key={l} style={{background:"#0d1520",borderRadius:6,padding:"6px",textAlign:"center"}}>
+                <div style={{fontSize:9,color:"#4a7a9a",marginBottom:3}}>{l}</div>
+                <div style={{fontSize:12,fontWeight:700,color:c,fontFamily:"monospace"}}>${fmt(v)}</div>
+              </div>
+            ))}
+          </div>
+          <div style={{background:"#1a1a0a",border:"1px solid #4a4a1a",borderRadius:5,padding:"5px",textAlign:"center",fontSize:11,fontWeight:700,color:"#ffff44"}}>
+            ⚡ R:R = {a.tradePlan.rrrLabel} · Risk {a.tradePlan.risk}% → Reward {a.tradePlan.reward}%
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function CoinGrid({coinSt}){
+  return(
+    <div style={{marginBottom:16}}>
+      <div style={{fontSize:10,color:"#2a5a7a",letterSpacing:2,marginBottom:5}}>WATCHLIST</div>
+      <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
+        {WATCHLIST.map(sym=>{
+          const st=coinSt[sym];
+          const col=st==="pass"?"#22c55e":st==="scanning"?"#00e5ff":st==="fail"?"#1a3050":"#1a2a3a";
+          const tc=st==="pass"?"#22c55e":st==="scanning"?"#00e5ff":"#2a4a6a";
+          return(
+            <div key={sym} style={{fontSize:9,fontFamily:"monospace",padding:"2px 6px",
+              borderRadius:3,border:`1px solid ${col}`,color:tc,transition:"all .3s"}}>
+              {sym.replace("USDT","")}
+            </div>
+          );
+        })}
       </div>
     </div>
+  );
+}
+
+// ═══════════════════════════════════════════
+// FVG PANEL
+// ═══════════════════════════════════════════
+function FVGPanel({tgToken,tgChat,bellOn}){
+  const [alerts,setAlerts]=useState([]);
+  const [scanning,setScanning]=useState(false);
+  const [progress,setProgress]=useState(0);
+  const [scanned,setScanned]=useState(0);
+  const [status,setStatus]=useState(DEMO_MODE?"🟡 DEMO MODE":"");
+  const [filter,setFilter]=useState("ALL");
+  const [coinSt,setCoinSt]=useState({});
+  const [expanded,setExpanded]=useState({});
+  const stopRef=useRef(false);
+
+  const runScan=async()=>{
+    if(scanning)return;
+    stopRef.current=false;
+    setScanning(true);setAlerts([]);setScanned(0);setProgress(0);setCoinSt({});setExpanded({});
+    if(DEMO_MODE){
+      setStatus("🟡 DEMO — Simulating scan…");
+      for(let i=0;i<WATCHLIST.length;i++){
+        if(stopRef.current)break;
+        const sym=WATCHLIST[i];
+        setCoinSt(p=>({...p,[sym]:"scanning"}));
+        setScanned(i+1);setProgress(Math.round(((i+1)/WATCHLIST.length)*100));
+        await new Promise(r=>setTimeout(r,80));
+        setCoinSt(p=>({...p,[sym]:MOCK_FVG.find(a=>a.symbol===sym)?"pass":"fail"}));
+      }
+      setAlerts(MOCK_FVG);setScanning(false);
+      setStatus(`🟡 DEMO — ${MOCK_FVG.length} sample signals`);
+      return;
+    }
+    const found=[];
+    for(let i=0;i<WATCHLIST.length;i++){
+      if(stopRef.current)break;
+      const sym=WATCHLIST[i];
+      setStatus(`Scanning ${sym.replace("USDT","")}…`);
+      setCoinSt(p=>({...p,[sym]:"scanning"}));
+      const r=await scanFVGLive(sym);
+      if(r){
+        found.push(r);
+        setAlerts([...found].sort((a,b)=>b.score-a.score));
+        setCoinSt(p=>({...p,[sym]:"pass"}));
+        if(bellOn&&tgToken&&tgChat)tgSend(tgToken,tgChat,"fvg",r);
+        if(bellOn&&"Notification"in window&&Notification.permission==="granted")
+          new Notification(`🎯 ${sym.replace("USDT","")} — ${r.dir}`,{body:`${r.htfTF} ${r.zoneType} | TOP:$${fmt(r.zoneTop)} BOT:$${fmt(r.zoneBot)}`});
+      }else{setCoinSt(p=>({...p,[sym]:"fail"}));}
+      setScanned(i+1);setProgress(Math.round(((i+1)/WATCHLIST.length)*100));
+      await new Promise(r=>setTimeout(r,350));
+    }
+    setScanning(false);setStatus(`Done — ${found.length} signal${found.length!==1?"s":""} found`);
+  };
+
+  const bull=alerts.filter(a=>a.dir==="BULL").length;
+  const bear=alerts.filter(a=>a.dir==="BEAR").length;
+  const show=filter==="ALL"?alerts:filter==="BULL"?alerts.filter(a=>a.dir==="BULL"):alerts.filter(a=>a.dir==="BEAR");
+
+  return(
     <div>
-      <div class="score bull">65</div>
-      <div class="score-label">SCORE</div>
+      {DEMO_MODE&&<div style={{background:"#1a1200",border:"1px solid #5a3a00",borderRadius:7,padding:"8px 12px",marginBottom:10,fontSize:11,color:"#f59e0b",fontFamily:"monospace"}}>
+        🟡 DEMO MODE — Peke lang ang data. Palitan ng <b>DEMO_MODE = false</b> para sa live.
+      </div>}
+      <div style={S.controls}>
+        <button style={{...S.scanBtn,opacity:scanning?0.6:1}} onClick={runScan} disabled={scanning}>
+          {scanning?<span>⟳ SCANNING…</span>:"▶ SCAN NOW"}
+        </button>
+        {scanning&&<button style={S.stopBtn} onClick={()=>{stopRef.current=true;}}>■ STOP</button>}
+      </div>
+      <div style={S.progressWrap}><div style={{...S.progressBar,width:`${progress}%`}}/></div>
+      <div style={S.statsRow}>
+        {[{l:"SETUPS",v:alerts.length,c:"#00e5ff"},{l:"BULLISH",v:bull,c:"#22c55e"},
+          {l:"BEARISH",v:bear,c:"#ef4444"},{l:"SCANNED",v:`${scanned}/${WATCHLIST.length}`,c:"#94a3b8"}].map(s=>(
+          <div key={s.l} style={S.stat}>
+            <div style={{fontSize:24,fontWeight:700,color:s.c,fontFamily:"monospace"}}>{s.v}</div>
+            <div style={{fontSize:9,letterSpacing:1.5,color:"#2a5a7a",marginTop:2}}>{s.l}</div>
+          </div>
+        ))}
+      </div>
+      <div style={S.tabs}>
+        {["ALL","BULL","BEAR"].map(f=>(
+          <button key={f} style={{...S.tab,...(filter===f?S.tabActive:{})}} onClick={()=>setFilter(f)}>{f}</button>
+        ))}
+      </div>
+      {status&&<div style={S.statusLine}>&gt; {status}</div>}
+      <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:14}}>
+        {show.length===0&&!scanning&&(
+          <div style={S.empty}>{alerts.length>0?"Walang match sa filter.":"Press SCAN NOW para magsimula."}</div>
+        )}
+        {show.map((a,i)=>{
+          const b=a.dir==="BULL",sym=a.symbol.replace("USDT",""),open=!!expanded[i];
+          return(
+            <div key={i} style={{...S.card,borderColor:b?"#166534":"#7f1d1d",background:b?"#0a1f12":"#1a0a0a",animation:"fadeIn .3s"}}>
+              <div style={{...S.cardAccent,background:b?"#22c55e":"#ef4444"}}/>
+              <div style={S.cardTop}>
+                <div style={{display:"flex",alignItems:"center",gap:10}}>
+                  <div style={{...S.avatar,background:b?"#14532d":"#7f1d1d"}}>S</div>
+                  <div>
+                    <div style={{display:"flex",alignItems:"baseline",gap:5,flexWrap:"wrap"}}>
+                      <span style={S.coinName}>{sym}</span>
+                      <span style={{color:"#4a6a7a",fontSize:12}}>/USDT</span>
+                      <span style={{...S.dirBadge,borderColor:b?"#22c55e":"#ef4444",color:b?"#22c55e":"#ef4444"}}>{b?"▲":"▼"} {a.dir}</span>
+                    </div>
+                    <div style={{color:"#4a8a9a",fontSize:12,fontFamily:"monospace"}}>${fmt(a.price)}</div>
+                  </div>
+                </div>
+                <div style={{textAlign:"right"}}>
+                  <div style={{fontSize:24,fontWeight:700,color:b?"#22c55e":"#ef4444",fontFamily:"monospace"}}>{a.score}</div>
+                  <div style={{fontSize:9,color:"#2a5a7a"}}>SCORE</div>
+                </div>
+              </div>
+              <div style={S.entryRow}>
+                <span style={{color:"#2a5a7a",fontSize:11}}>ENTRY:</span>
+                <div style={S.entryBadge}>
+                  <span style={{color:"#94a3b8",fontSize:11}}>{a.ltfTF}</span>
+                  <CandleIcon pattern={a.pattern}/>
+                  <span style={{color:b?"#22c55e":"#ef4444",fontSize:11,fontWeight:700}}>{a.pattern}</span>
+                  {a.inFVG&&<span style={{color:"#00e5ff",fontSize:10}}>●FVG</span>}
+                  <span style={{fontSize:10,padding:"1px 5px",borderRadius:3,
+                    background:a.zoneType==="FVG"?"#0a1a3a":"#1a0a30",
+                    border:`1px solid ${a.zoneType==="FVG"?"#1a4a8a":"#3a1a7a"}`,
+                    color:a.zoneType==="FVG"?"#60a0ff":"#a060ff"}}>{a.htfTF} {a.zoneType}</span>
+                  {a.rsiDiv&&<span style={{fontSize:10,padding:"1px 5px",borderRadius:3,background:"#1a1200",border:"1px solid #5a4a00",color:"#ffaa44"}}>RSI DIV</span>}
+                </div>
+                <a href={a.tvHTF} target="_blank" style={S.tvBtn}>📈 {a.htfTF}</a>
+                <a href={a.tvLTF} target="_blank" style={{...S.tvBtn,borderColor:"#1a5a30",color:"#60e090"}}>📊 {a.ltfTF}</a>
+              </div>
+              {(()=>{
+                const g=getGrade(a.score);
+                const isCounter=a.weeklyTrend&&((a.dir==="BULL"&&a.weeklyTrend==="bear")||(a.dir==="BEAR"&&a.weeklyTrend==="bull"));
+                return(
+                  <div style={{display:"flex",alignItems:"center",gap:6,padding:"6px 12px",borderTop:"1px solid #0d2035",flexWrap:"wrap"}}>
+                    <span style={{fontSize:10,fontWeight:700,padding:"2px 9px",borderRadius:4,
+                      background:g.bg,border:`1px solid ${g.border}`,color:g.color}}>{g.label}</span>
+                    {isCounter
+                      ?<span style={{fontSize:10,padding:"2px 8px",borderRadius:3,background:"#1a1a0a",border:"1px solid #5a5a1a",color:"#ffff44",fontWeight:700}}>↺ COUNTER-TREND</span>
+                      :<span style={{fontSize:10,padding:"2px 8px",borderRadius:3,background:"#0a1a0a",border:"1px solid #1a5a1a",color:"#44ff88",fontWeight:700}}>✓ WITH TREND</span>
+                    }
+                    {isCounter&&<span style={{fontSize:9,color:"#7a6a30",fontFamily:"monospace"}}>Maliit na lote lang</span>}
+                  </div>
+                );
+              })()}
+              <button onClick={()=>setExpanded(p=>({...p,[i]:!p[i]}))} style={S.expandBtn}>
+                {open?"▲ ITAGO":"▼ IPAKITA"} ANG ZONE PRICES
+              </button>
+              {open&&<ZoneBox a={a}/>}
+            </div>
+          );
+        })}
+      </div>
+      <CoinGrid coinSt={coinSt}/>
     </div>
-  </div>
+  );
+}
 
-  <div class="entry-row">
-    <span class="entry-label">ENTRY:</span>
-    <span class="tag tf">30M</span>
-    <span class="tag fvg" style="color:#44ff88;border-color:#1a7a3a;">●FVG</span>
-    <span class="tag ob">1W OB</span>
-    <span class="tag rsi">RSI DIV</span>
-  </div>
+// ═══════════════════════════════════════════
+// SWEEP PANEL
+// ═══════════════════════════════════════════
+function SweepPanel({tgToken,tgChat,bellOn}){
+  const [alerts,setAlerts]=useState([]);
+  const [scanning,setScanning]=useState(false);
+  const [progress,setProgress]=useState(0);
+  const [scanned,setScanned]=useState(0);
+  const [status,setStatus]=useState(DEMO_MODE?"🟡 DEMO MODE":"");
+  const [filter,setFilter]=useState("ALL");
+  const [coinSt,setCoinSt]=useState({});
+  const stopRef=useRef(false);
 
-  <!-- BULLISH FVG ZONE -->
-  <div class="zone-section">
-    <div class="zone-header">
-      <div class="zone-title">
-        <span class="zone-label fvg-bull">FVG</span>
-        <span class="zone-label" style="background:#0a0a2a;color:#aaaaff;border:1px solid #3a3a7a;">1W</span>
-        <span class="zone-type">Formed: Jun 15</span>
-      </div>
-      <span class="bull-zone-tag">BULL FVG ✓</span>
-    </div>
-    <div class="price-row">
-      <span class="price-label"><span class="price-dot dot-top"></span>TOP</span>
-      <div><span class="price-val">$575.00</span><span class="price-chg up">+2.7%</span></div>
-    </div>
-    <div class="price-row">
-      <span class="price-label"><span class="price-dot dot-mid"></span>MID 50%</span>
-      <div><span class="price-val">$552.50</span><span class="price-chg dn">-1.3%</span></div>
-    </div>
-    <div class="price-row">
-      <span class="price-label"><span class="price-dot dot-bot"></span>BOT</span>
-      <div><span class="price-val">$530.00</span><span class="price-chg dn">-5.3%</span></div>
-    </div>
-    <div class="current-price-box">
-      <span class="cp-label">CURRENT PRICE</span>
-      <span class="cp-val">$559.91</span>
-    </div>
-  </div>
+  const runScan=async()=>{
+    if(scanning)return;
+    stopRef.current=false;
+    setScanning(true);setAlerts([]);setScanned(0);setProgress(0);setCoinSt({});
+    if(DEMO_MODE){
+      setStatus("🟡 DEMO — Simulating scan…");
+      for(let i=0;i<WATCHLIST.length;i++){
+        if(stopRef.current)break;
+        const sym=WATCHLIST[i];
+        setCoinSt(p=>({...p,[sym]:"scanning"}));
+        setScanned(i+1);setProgress(Math.round(((i+1)/WATCHLIST.length)*100));
+        await new Promise(r=>setTimeout(r,80));
+        setCoinSt(p=>({...p,[sym]:MOCK_SWEEP.find(a=>a.symbol===sym)?"pass":"fail"}));
+      }
+      setAlerts(MOCK_SWEEP);setScanning(false);
+      setStatus(`🟡 DEMO — ${MOCK_SWEEP.length} sample signals`);
+      return;
+    }
+    const found=[];
+    for(let i=0;i<WATCHLIST.length;i++){
+      if(stopRef.current)break;
+      const sym=WATCHLIST[i];
+      setStatus(`Checking ${sym.replace("USDT","")}…`);
+      setCoinSt(p=>({...p,[sym]:"scanning"}));
+      const r=await scanSweepLive(sym);
+      if(r){
+        found.push(r);setAlerts([...found]);
+        setCoinSt(p=>({...p,[sym]:"pass"}));
+        if(bellOn&&tgToken&&tgChat)tgSend(tgToken,tgChat,"sweep",r);
+        if(bellOn&&"Notification"in window&&Notification.permission==="granted")
+          new Notification(`${r.dir==="BULL"?"🟢":"🔴"} ${sym.replace("USDT","")} — SWEEP + OB`,{body:`${r.dir} · swept $${fmt(r.sweptLevel)}`});
+      }else{setCoinSt(p=>({...p,[sym]:"fail"}));}
+      setScanned(i+1);setProgress(Math.round(((i+1)/WATCHLIST.length)*100));
+      await new Promise(r=>setTimeout(r,300));
+    }
+    setScanning(false);setStatus(`Done — ${found.length} setup${found.length!==1?"s":""} found`);
+  };
 
-  <!-- RSI DIVERGENCE BULL -->
-  <div class="rsi-section">
-    <div class="rsi-header">📊 RSI DIVERGENCE (4H)</div>
-    <div class="rsi-row">
-      <div class="rsi-item">
-        <div class="rsi-item-label">RSI VALUE</div>
-        <div class="rsi-item-val" style="color:#ffaa44;">38.7</div>
+  const bull=alerts.filter(a=>a.dir==="BULL").length;
+  const bear=alerts.filter(a=>a.dir==="BEAR").length;
+  const show=filter==="ALL"?alerts:filter==="BULL"?alerts.filter(a=>a.dir==="BULL"):alerts.filter(a=>a.dir==="BEAR");
+
+  return(
+    <div>
+      {DEMO_MODE&&<div style={{background:"#1a1200",border:"1px solid #5a3a00",borderRadius:7,padding:"8px 12px",marginBottom:10,fontSize:11,color:"#f59e0b",fontFamily:"monospace"}}>
+        🟡 DEMO MODE — Peke lang ang data.
+      </div>}
+      <div style={{background:"#050f1a",border:"1px solid #0d2540",borderRadius:7,padding:"9px 12px",marginBottom:10}}>
+        <div style={{fontSize:10,color:"#2a6a8a",letterSpacing:2,marginBottom:5}}>MGA RULES</div>
+        <div style={{fontSize:11,color:"#4a8a9a",fontFamily:"monospace",lineHeight:1.8}}>
+          <span style={{color:"#22c55e"}}>BULL</span> → 15M wick swept prev LOW → 1M <span style={{color:"#22c55e",fontWeight:700}}>GREEN</span> Outside Bar<br/>
+          <span style={{color:"#ef4444"}}>BEAR</span> → 15M wick swept prev HIGH → 1M <span style={{color:"#22c55e",fontWeight:700}}>GREEN</span> Outside Bar<br/>
+          <span style={{color:"#1a5a7a",fontSize:10}}>⚠️ Ikaw ang bahala sa entry · Manage your risk</span>
+        </div>
       </div>
-      <div class="rsi-item">
-        <div class="rsi-item-label">PRICE ACTION</div>
-        <div class="rsi-item-val" style="color:#44ff88;">Lower Low</div>
+      <div style={S.controls}>
+        <button style={{...S.scanBtn,background:"#004830",opacity:scanning?0.6:1}} onClick={runScan} disabled={scanning}>
+          {scanning?<span>⟳ SCANNING…</span>:"▶ SCAN NOW"}
+        </button>
+        {scanning&&<button style={S.stopBtn} onClick={()=>{stopRef.current=true;}}>■ STOP</button>}
       </div>
-      <div class="rsi-item">
-        <div class="rsi-item-label">RSI ACTION</div>
-        <div class="rsi-item-val" style="color:#44ff88;">Higher Low</div>
+      <div style={S.progressWrap}><div style={{...S.progressBar,width:`${progress}%`,background:"#00aa60"}}/></div>
+      <div style={S.statsRow}>
+        {[{l:"SETUPS",v:alerts.length,c:"#00ff88"},{l:"BULLISH",v:bull,c:"#22c55e"},
+          {l:"BEARISH",v:bear,c:"#ef4444"},{l:"SCANNED",v:`${scanned}/${WATCHLIST.length}`,c:"#94a3b8"}].map(s=>(
+          <div key={s.l} style={S.stat}>
+            <div style={{fontSize:24,fontWeight:700,color:s.c,fontFamily:"monospace"}}>{s.v}</div>
+            <div style={{fontSize:9,letterSpacing:1.5,color:"#2a5a7a",marginTop:2}}>{s.l}</div>
+          </div>
+        ))}
       </div>
-      <div class="rsi-item">
-        <div class="rsi-item-label">SIGNAL</div>
-        <span class="rsi-div-badge rsi-div-bull">BULLISH DIV ✓</span>
+      <div style={S.tabs}>
+        {["ALL","BULL","BEAR"].map(f=>(
+          <button key={f} style={{...S.tab,...(filter===f?S.tabActive:{})}} onClick={()=>setFilter(f)}>{f}</button>
+        ))}
       </div>
+      {status&&<div style={S.statusLine}>&gt; {status}</div>}
+      <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:14}}>
+        {show.length===0&&!scanning&&(
+          <div style={S.empty}>{alerts.length>0?"Walang match sa filter.":"Press SCAN NOW para magsimula."}</div>
+        )}
+        {show.map((a,i)=>{
+          const b=a.dir==="BULL",sym=a.symbol.replace("USDT","");
+          return(
+            <div key={i} style={{...S.card,borderColor:b?"#166534":"#7f1d1d",background:b?"#0a1f12":"#1a0a0a",animation:"fadeIn .3s"}}>
+              <div style={{...S.cardAccent,background:b?"#22c55e":"#ef4444"}}/>
+              <div style={S.cardTop}>
+                <div style={{display:"flex",alignItems:"center",gap:10}}>
+                  <div style={{...S.avatar,background:b?"#14532d":"#7f1d1d",fontSize:18}}>{b?"🟢":"🔴"}</div>
+                  <div>
+                    <div style={{display:"flex",alignItems:"baseline",gap:5,flexWrap:"wrap"}}>
+                      <span style={S.coinName}>{sym}</span>
+                      <span style={{color:"#4a6a7a",fontSize:12}}>/USDT</span>
+                      <span style={{...S.dirBadge,borderColor:b?"#22c55e":"#ef4444",color:b?"#22c55e":"#ef4444"}}>{b?"▲":"▼"} {a.dir}</span>
+                    </div>
+                    <div style={{color:"#4a8a9a",fontSize:12,fontFamily:"monospace"}}>${fmt(a.price)}</div>
+                  </div>
+                </div>
+                <div style={{display:"flex",flexDirection:"column",gap:4}}>
+                  <a href={a.tv15m} target="_blank" style={S.tvBtn}>📈 15M</a>
+                  <a href={a.tv1m}  target="_blank" style={{...S.tvBtn,borderColor:"#1a5a30",color:"#60e090"}}>📊 1M</a>
+                </div>
+              </div>
+              <div style={{background:"#040c14",border:"1px solid #0d2035",borderRadius:7,padding:"8px 10px",marginBottom:8}}>
+                <div style={{fontSize:10,color:"#2a5a7a",letterSpacing:1.5,marginBottom:4}}>15M SWEEP</div>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                  <span style={{fontSize:11,color:"#94a3b8",fontFamily:"monospace"}}>
+                    {b?"Low":"High"} swept: <span style={{color:b?"#22c55e":"#ef4444",fontWeight:700}}>${fmt(a.sweptLevel)}</span>
+                  </span>
+                  <span style={{fontSize:10,color:b?"#22c55e":"#ef4444",border:`1px solid ${b?"#166534":"#7f1d1d"}`,borderRadius:3,padding:"1px 6px"}}>
+                    {b?"🔽 Swept Low":"🔼 Swept High"}
+                  </span>
+                </div>
+              </div>
+              <div style={{background:"#040c14",border:"1px solid #0d2035",borderRadius:7,padding:"8px 10px"}}>
+                <div style={{fontSize:10,color:"#2a5a7a",letterSpacing:1.5,marginBottom:5}}>
+                  1M OUTSIDE BAR <span style={{color:"#22c55e"}}>GREEN ✅</span>
+                  <span style={{color:"#1a5a7a",marginLeft:8}}>@ {a.obTime}</span>
+                </div>
+                <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                  <OutsideBarIcon/>
+                  <div style={{flex:1,display:"flex",flexDirection:"column",gap:3}}>
+                    {[["HIGH",a.obHigh,"#e2e8f0"],["OPEN",a.obOpen,"#22c55e"],["CLOSE",a.obClose,"#22c55e"],["LOW",a.obLow,"#e2e8f0"]].map(([l,v,c])=>(
+                      <div key={l} style={{display:"flex",justifyContent:"space-between"}}>
+                        <span style={{fontSize:10,color:"#4a6a7a"}}>{l}</span>
+                        <span style={{fontFamily:"monospace",fontSize:11,color:c,fontWeight:700}}>${fmt(v)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div style={{marginTop:6,fontSize:9,color:"#1a4a6a",fontFamily:"monospace"}}>⚠️ Ikaw ang bahala sa entry · Manage your risk</div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <CoinGrid coinSt={coinSt}/>
     </div>
-  </div>
+  );
+}
 
-  <!-- TRADE PLAN BULL -->
-  <div class="trade-section">
-    <div class="trade-header">🎯 TRADE PLAN — 1:3 RRR</div>
-    <div class="trade-grid">
-      <div class="trade-item">
-        <div class="trade-item-label">ENTRY</div>
-        <div class="trade-item-val entry-val">$530.00</div>
+// ═══════════════════════════════════════════
+// ROOT APP
+// ═══════════════════════════════════════════
+function App(){
+  const [tab,setTab]=useState("fvg");
+  const [clock,setClock]=useState(phtNow());
+  const [bellOn,setBellOn]=useState(true);
+  const [tgToken,setTgToken]=useState("");
+  const [tgChat,setTgChat]=useState("");
+  const [showCfg,setShowCfg]=useState(false);
+
+  useEffect(()=>{const t=setInterval(()=>setClock(phtNow()),1000);return()=>clearInterval(t);},[]);
+
+  return(
+    <div style={S.root}>
+      <div style={S.header}>
+        <div style={{display:"flex",alignItems:"center",gap:10}}>
+          <div style={S.logo}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="10" stroke="#00e5ff" strokeWidth="1.5"/>
+              <path d="M8 12h8M12 8v8" stroke="#00e5ff" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+          </div>
+          <div>
+            <div style={S.title}>ICT SCANNER PRO</div>
+            <div style={S.sub}>🕐 {clock}{DEMO_MODE?" · 🟡 DEMO":""}</div>
+          </div>
+        </div>
+        <div style={{display:"flex",gap:6}}>
+          <button style={{...S.bellBtn,background:bellOn?"#2a3a1a":"#1a1a1a",color:bellOn?"#a3e635":"#4a4a4a"}}
+            onClick={()=>{if(!bellOn&&"Notification"in window)Notification.requestPermission();setBellOn(v=>!v);}}>🔔</button>
+          <button style={S.cfgBtn} onClick={()=>setShowCfg(v=>!v)}>⚙</button>
+        </div>
       </div>
-      <div class="trade-item">
-        <div class="trade-item-label">STOP LOSS</div>
-        <div class="trade-item-val sl-val">$515.00</div>
+      {showCfg&&(
+        <div style={S.cfgBox}>
+          <div style={S.cfgLabel}>Telegram Bot Token</div>
+          <input style={S.inp} placeholder="123456:ABCdef…" value={tgToken} onChange={e=>setTgToken(e.target.value)}/>
+          <div style={S.cfgLabel}>Telegram Chat ID</div>
+          <input style={S.inp} placeholder="-100123456789" value={tgChat} onChange={e=>setTgChat(e.target.value)}/>
+          <div style={{fontSize:10,color:"#2a6a8a",marginTop:6}}>Gagamitin ng dalawang scanner.</div>
+        </div>
+      )}
+      <div style={{display:"flex",gap:0,marginBottom:14,borderRadius:8,overflow:"hidden",border:"1px solid #0d2035"}}>
+        <button onClick={()=>setTab("fvg")} style={{flex:1,padding:"11px 0",border:"none",cursor:"pointer",
+          fontFamily:"'Barlow Condensed',sans-serif",fontWeight:700,fontSize:13,letterSpacing:2,
+          background:tab==="fvg"?"#0048ff":"#040c14",color:tab==="fvg"?"#fff":"#2a5a7a",
+          borderRight:"1px solid #0d2035",transition:"all .2s"}}>📊 FVG / OB</button>
+        <button onClick={()=>setTab("sweep")} style={{flex:1,padding:"11px 0",border:"none",cursor:"pointer",
+          fontFamily:"'Barlow Condensed',sans-serif",fontWeight:700,fontSize:13,letterSpacing:2,
+          background:tab==="sweep"?"#006640":"#040c14",color:tab==="sweep"?"#fff":"#2a5a7a",
+          transition:"all .2s"}}>🔍 SWEEP + OB</button>
       </div>
-      <div class="trade-item">
-        <div class="trade-item-label">TAKE PROFIT</div>
-        <div class="trade-item-val tp-val">$575.00</div>
-      </div>
-      <div class="rrr-badge">⚡ RISK:REWARD = 1:3 (15pts risk → 45pts reward)</div>
+      {tab==="fvg"
+        ?<FVGPanel tgToken={tgToken} tgChat={tgChat} bellOn={bellOn}/>
+        :<SweepPanel tgToken={tgToken} tgChat={tgChat} bellOn={bellOn}/>}
     </div>
-  </div>
+  );
+}
 
-  <button class="toggle-btn">▼ IPAKITA ANG ZONE PRICES</button>
-</div>
+const S={
+  root:{minHeight:"100vh",background:"#080f18",color:"#94a3b8",fontFamily:"'Barlow Condensed',sans-serif",padding:"14px 12px",maxWidth:480,margin:"0 auto"},
+  header:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12,paddingBottom:12,borderBottom:"1px solid #0d2035"},
+  logo:{width:42,height:42,borderRadius:10,background:"#0a2040",border:"1px solid #0d3060",display:"flex",alignItems:"center",justifyContent:"center"},
+  title:{fontSize:20,fontWeight:700,color:"#e2e8f0",letterSpacing:2},
+  sub:{fontSize:10,color:"#2a5a7a",letterSpacing:1,marginTop:1},
+  bellBtn:{padding:"7px 10px",borderRadius:6,border:"1px solid #2a3a1a",fontSize:14,cursor:"pointer"},
+  cfgBtn:{background:"#0a1a2a",border:"1px solid #0d2035",color:"#4a8a9a",fontSize:16,width:34,height:34,borderRadius:6,cursor:"pointer"},
+  cfgBox:{background:"#060e18",border:"1px solid #0d2035",borderRadius:8,padding:"12px",marginBottom:12},
+  cfgLabel:{fontSize:10,color:"#2a5a7a",letterSpacing:1.5,marginBottom:4,marginTop:8},
+  inp:{width:"100%",background:"#0a1a2a",border:"1px solid #0d2035",color:"#00e5ff",fontFamily:"monospace",fontSize:11,padding:"6px 10px",borderRadius:4},
+  controls:{display:"flex",gap:8,marginBottom:8,alignItems:"center"},
+  scanBtn:{flex:1,background:"#0048ff",border:"none",color:"#fff",fontFamily:"'Barlow Condensed',sans-serif",fontWeight:700,letterSpacing:2,fontSize:14,padding:"9px 0",borderRadius:6,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6},
+  stopBtn:{padding:"7px 14px",borderRadius:6,border:"1px solid #ef4444",background:"transparent",color:"#ef4444",fontWeight:700,letterSpacing:1.5,fontSize:12,cursor:"pointer"},
+  progressWrap:{height:3,background:"#0d2035",borderRadius:2,marginBottom:12,overflow:"hidden"},
+  progressBar:{height:"100%",background:"#0048ff",borderRadius:2,transition:"width .3s"},
+  statsRow:{display:"grid",gridTemplateColumns:"repeat(4,1fr)",borderTop:"1px solid #0d2035",borderBottom:"1px solid #0d2035",marginBottom:12},
+  stat:{padding:"10px 0",textAlign:"center",borderRight:"1px solid #0d2035"},
+  tabs:{display:"flex",gap:4,marginBottom:10},
+  tab:{padding:"6px 14px",borderRadius:5,border:"1px solid #0d2035",background:"transparent",color:"#4a6a7a",fontFamily:"'Barlow Condensed',sans-serif",fontWeight:700,letterSpacing:2,fontSize:12,cursor:"pointer"},
+  tabActive:{background:"#0d2035",color:"#e2e8f0",borderColor:"#1a4060"},
+  statusLine:{fontFamily:"monospace",fontSize:11,color:"#2a6a8a",marginBottom:10},
+  empty:{textAlign:"center",padding:"30px 20px",fontSize:12,color:"#1a4a6a",border:"1px dashed #0d2035",borderRadius:8,fontFamily:"monospace"},
+  card:{borderRadius:10,border:"1px solid",padding:"12px 14px",position:"relative",overflow:"hidden"},
+  cardAccent:{position:"absolute",left:0,top:0,bottom:0,width:3,borderRadius:"3px 0 0 3px"},
+  cardTop:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10},
+  avatar:{width:36,height:36,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:700,color:"#fff",flexShrink:0},
+  coinName:{fontSize:22,fontWeight:700,color:"#e2e8f0",letterSpacing:1},
+  dirBadge:{fontSize:11,border:"1px solid",borderRadius:3,padding:"1px 6px",fontWeight:700},
+  entryRow:{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"},
+  entryBadge:{display:"flex",alignItems:"center",gap:5,background:"#060e18",border:"1px solid #0d2035",borderRadius:6,padding:"5px 8px",flex:1,flexWrap:"wrap"},
+  tvBtn:{textDecoration:"none",background:"#0a2040",border:"1px solid #1a5080",color:"#60c0ff",fontSize:11,fontWeight:700,borderRadius:5,padding:"5px 8px",letterSpacing:1,whiteSpace:"nowrap",display:"flex",alignItems:"center",gap:3},
+  expandBtn:{marginTop:8,width:"100%",background:"#040c14",border:"1px solid #0d2035",borderRadius:6,color:"#2a6a8a",fontFamily:"monospace",fontSize:10,padding:"5px 0",cursor:"pointer",letterSpacing:1.5,display:"flex",alignItems:"center",justifyContent:"center",gap:6},
+};
 
-<div style="text-align:center;padding:16px;color:#4a7a9a;font-size:11px;">
-  ── PREVIEW LANG ITO — HINDI PA LIVE ──
-</div>
-
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
 </body>
 </html>
