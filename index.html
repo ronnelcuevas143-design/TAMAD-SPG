@@ -138,19 +138,117 @@ function isGRG(c){const s=c.slice(-4);return s[0].close>s[1].close&&s[1].close<s
 const FS={"1W":40,"1D":30,"4H":20};
 const LS={"1H":20,"30M":15,"15M":10};
 const ZS={"FVG":20,"OB":10};
-function fvgScore(h,l,z){return(FS[h]||10)+(LS[l]||5)+(ZS[z]||5);}
+function fvgScore(h,l,z,rsiDiv){return(FS[h]||10)+(LS[l]||5)+(ZS[z]||5)+(rsiDiv?25:0);}
+
+// ═══════════════════════════════════════════
+// RSI CALCULATION
+// ═══════════════════════════════════════════
+function calcRSI(c,period=14){
+  if(c.length<period+1)return null;
+  let gains=0,losses=0;
+  for(let i=1;i<=period;i++){
+    const d=c[i].close-c[i-1].close;
+    if(d>0)gains+=d; else losses+=Math.abs(d);
+  }
+  let avgG=gains/period,avgL=losses/period;
+  for(let i=period+1;i<c.length;i++){
+    const d=c[i].close-c[i-1].close;
+    avgG=(avgG*(period-1)+(d>0?d:0))/period;
+    avgL=(avgL*(period-1)+(d<0?Math.abs(d):0))/period;
+  }
+  if(avgL===0)return 100;
+  return 100-(100/(1+avgG/avgL));
+}
+
+function detectRSIDivergence(c){
+  // Need at least 30 candles
+  if(c.length<30)return null;
+  const recent=c.slice(-30);
+  // Split into two halves to compare
+  const half=Math.floor(recent.length/2);
+  const first=recent.slice(0,half);
+  const second=recent.slice(half);
+  const rsi1=calcRSI(first);
+  const rsi2=calcRSI(second);
+  if(!rsi1||!rsi2)return null;
+  const price1=Math.max(...first.map(x=>x.high));
+  const price2=Math.max(...second.map(x=>x.high));
+  const priceLow1=Math.min(...first.map(x=>x.low));
+  const priceLow2=Math.min(...second.map(x=>x.low));
+  // Bearish divergence: price higher high, RSI lower high
+  if(price2>price1&&rsi2<rsi1-2)return{type:"bear",rsi:rsi2.toFixed(1),priceAction:"Higher High",rsiAction:"Lower High"};
+  // Bullish divergence: price lower low, RSI higher low
+  if(priceLow2<priceLow1&&rsi2>rsi1+2)return{type:"bull",rsi:rsi2.toFixed(1),priceAction:"Lower Low",rsiAction:"Higher Low"};
+  return null;
+}
+
+// ═══════════════════════════════════════════
+// 1W TREND DIRECTION
+// ═══════════════════════════════════════════
+function get1WTrend(c){
+  if(c.length<5)return null;
+  const recent=c.slice(-5);
+  const ema=recent.reduce((a,b)=>a+b.close,0)/recent.length;
+  const price=c.at(-1).close;
+  // Simple: if price above recent avg = bullish, below = bearish
+  if(price>ema*1.002)return"bull";
+  if(price<ema*0.998)return"bear";
+  return"neutral";
+}
+
+// ═══════════════════════════════════════════
+// TRADE PLAN 1:3 RRR
+// ═══════════════════════════════════════════
+function getGrade(score){
+  if(score>=85)return{grade:"S",label:"⭐ S-GRADE",rrr:3,rrrLabel:"1:3",color:"#22c55e",bg:"#0a2a0a",border:"#22c55e"};
+  if(score>=70)return{grade:"A",label:"🔵 A-GRADE",rrr:2,rrrLabel:"1:2",color:"#4adaff",bg:"#0a1a3a",border:"#1a4a8a"};
+  if(score>=50)return{grade:"B",label:"⚠️ B-GRADE",rrr:1,rrrLabel:"1:1",color:"#ffaa44",bg:"#1a1200",border:"#5a4a00"};
+  return{grade:"C",label:"❌ C-GRADE",rrr:0,rrrLabel:"SKIP",color:"#ef4444",bg:"#1a0a0a",border:"#7a1a1a"};
+}
+function calcTradePlan(dir,zoneTop,zoneBot,price,score){
+  const g=getGrade(score);
+  if(g.rrr===0)return null;
+  const buf=0.002;
+  if(dir==="BEAR"){
+    const entry=zoneTop*(1+buf);
+    const sl=entry*(1+0.025);
+    const risk=sl-entry;
+    const tp=entry-(risk*g.rrr);
+    return{entry,sl,tp,rrr:g.rrr,rrrLabel:g.rrrLabel,risk:((sl-entry)/entry*100).toFixed(2),reward:((entry-tp)/entry*100).toFixed(2)};
+  }else{
+    const entry=zoneBot*(1-buf);
+    const sl=entry*(1-0.025);
+    const risk=entry-sl;
+    const tp=entry+(risk*g.rrr);
+    return{entry,sl,tp,rrr:g.rrr,rrrLabel:g.rrrLabel,risk:((entry-sl)/entry*100).toFixed(2),reward:((tp-entry)/entry*100).toFixed(2)};
+  }
+}
 
 async function scanFVGLive(symbol){
+  // Step 1: Get 1W trend first (trend filter)
+  const c1w=await klines(symbol,"1W",10);
+  const weeklyTrend=c1w?get1WTrend(c1w):null;
+
   let hit=null;
   for(const tf of["1W","1D","4H"]){
     const c=await klines(symbol,tf,50);
     if(!c)continue;
     const price=c.at(-1).close;
-    const all=[...detectFVG(c),...detectOB(c)];
-    const z=all.find(z=>inZone(price,z));
+    const allZones=[...detectFVG(c),...detectOB(c)];
+    // FIXED: Match zone direction with weekly trend
+    const z=allZones.find(z=>{
+      if(!inZone(price,z))return false;
+      // If weekly trend is bear, prefer bear zones
+      // If weekly trend is bull, prefer bull zones
+      if(weeklyTrend==="bear"&&z.type==="bull")return false;
+      if(weeklyTrend==="bull"&&z.type==="bear")return false;
+      return true;
+    });
     if(z){hit={tf,zone:z,price};break;}
   }
   if(!hit)return null;
+
+  // Step 2: LTF pattern check
   let ltf=null;
   for(const tf of["1H","30M","15M"]){
     const c=await klines(symbol,tf,20);
@@ -159,13 +257,31 @@ async function scanFVGLive(symbol){
     if(isGRG(c)){ltf={tf,pattern:"GRG",dir:"bear"};break;}
   }
   if(!ltf)return null;
+
+  // Step 3: RSI Divergence on 4H then 1H
+  let rsiDiv=null;
+  let rsiTF=null;
+  for(const tf of["4H","1H"]){
+    const c=await klines(symbol,tf,40);
+    if(!c)continue;
+    const div=detectRSIDivergence(c);
+    if(div){rsiDiv=div;rsiTF=tf;break;}
+  }
+
   const z=hit.zone;
+  const dir=ltf.dir==="bull"?"BULL":"BEAR";
+  const sc=fvgScore(hit.tf,ltf.tf,z.src,!!rsiDiv);
+  const tradePlan=calcTradePlan(dir,z.top,z.bot,hit.price,sc);
+
   return{
-    symbol,price:hit.price,dir:ltf.dir==="bull"?"BULL":"BEAR",
+    symbol,price:hit.price,dir,
     htfTF:hit.tf,zoneType:z.src,zoneDir:z.type,
     zoneTop:z.top,zoneBot:z.bot,zoneMid:z.mid,zoneFormed:z.formed_at,
     ltfTF:ltf.tf,pattern:ltf.pattern,inFVG:z.src==="FVG",
-    score:fvgScore(hit.tf,ltf.tf,z.src),
+    weeklyTrend,
+    rsiDiv,rsiTF,
+    tradePlan,
+    score:sc,
     tvHTF:tvLink(symbol,hit.tf),tvLTF:tvLink(symbol,ltf.tf),
   };
 }
@@ -297,6 +413,56 @@ function ZoneBox({a}){
       <div style={{marginTop:8,fontSize:9,color:"#1a4a6a",fontFamily:"monospace"}}>
         📌 Plot on {a.htfTF} chart · BOT → TOP · Mark MID line
       </div>
+      {/* RSI DIVERGENCE */}
+      {a.rsiDiv&&(
+        <div style={{marginTop:10,background:"#0a0f1a",border:"1px solid #1a3a1a",borderRadius:7,padding:"8px 10px"}}>
+          <div style={{fontSize:10,color:"#ffaa44",letterSpacing:1.5,fontWeight:700,marginBottom:6}}>📊 RSI DIVERGENCE ({a.rsiTF})</div>
+          <div style={{display:"flex",justifyContent:"space-between",flexWrap:"wrap",gap:6}}>
+            <div style={{textAlign:"center"}}>
+              <div style={{fontSize:9,color:"#4a7a9a",marginBottom:2}}>RSI</div>
+              <div style={{fontSize:14,fontWeight:700,color:"#ffaa44",fontFamily:"monospace"}}>{a.rsiDiv.rsi}</div>
+            </div>
+            <div style={{textAlign:"center"}}>
+              <div style={{fontSize:9,color:"#4a7a9a",marginBottom:2}}>PRICE</div>
+              <div style={{fontSize:11,fontWeight:700,color:a.rsiDiv.type==="bear"?"#ef4444":"#22c55e"}}>{a.rsiDiv.priceAction}</div>
+            </div>
+            <div style={{textAlign:"center"}}>
+              <div style={{fontSize:9,color:"#4a7a9a",marginBottom:2}}>RSI</div>
+              <div style={{fontSize:11,fontWeight:700,color:a.rsiDiv.type==="bear"?"#ef4444":"#22c55e"}}>{a.rsiDiv.rsiAction}</div>
+            </div>
+            <div style={{textAlign:"center"}}>
+              <div style={{fontSize:9,color:"#4a7a9a",marginBottom:2}}>SIGNAL</div>
+              <div style={{fontSize:10,fontWeight:700,padding:"2px 7px",borderRadius:4,
+                background:a.rsiDiv.type==="bear"?"#2a0a0a":"#0a2a0a",
+                border:`1px solid ${a.rsiDiv.type==="bear"?"#7a2a2a":"#2a7a2a"}`,
+                color:a.rsiDiv.type==="bear"?"#ff6666":"#44ff88"}}>
+                {a.rsiDiv.type==="bear"?"▼ BEAR DIV":"▲ BULL DIV"}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* TRADE PLAN 1:3 RRR */}
+      {a.tradePlan&&(
+        <div style={{marginTop:10,background:"#080d14",border:"1px solid #1a1a3a",borderRadius:7,padding:"8px 10px"}}>
+          <div style={{fontSize:10,color:"#aaaaff",letterSpacing:1.5,fontWeight:700,marginBottom:8}}>🎯 TRADE PLAN — {a.tradePlan.rrrLabel} RRR</div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,marginBottom:6}}>
+            {[
+              {l:"ENTRY",v:a.tradePlan.entry,c:"#4adaff"},
+              {l:"STOP LOSS",v:a.tradePlan.sl,c:"#ef4444"},
+              {l:"TAKE PROFIT",v:a.tradePlan.tp,c:"#22c55e"},
+            ].map(({l,v,c})=>(
+              <div key={l} style={{background:"#0d1520",borderRadius:6,padding:"6px",textAlign:"center"}}>
+                <div style={{fontSize:9,color:"#4a7a9a",marginBottom:3}}>{l}</div>
+                <div style={{fontSize:12,fontWeight:700,color:c,fontFamily:"monospace"}}>${fmt(v)}</div>
+              </div>
+            ))}
+          </div>
+          <div style={{background:"#1a1a0a",border:"1px solid #4a4a1a",borderRadius:5,padding:"5px",textAlign:"center",fontSize:11,fontWeight:700,color:"#ffff44"}}>
+            ⚡ R:R = {a.tradePlan.rrrLabel} · Risk {a.tradePlan.risk}% → Reward {a.tradePlan.reward}%
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -443,10 +609,26 @@ function FVGPanel({tgToken,tgChat,bellOn}){
                     background:a.zoneType==="FVG"?"#0a1a3a":"#1a0a30",
                     border:`1px solid ${a.zoneType==="FVG"?"#1a4a8a":"#3a1a7a"}`,
                     color:a.zoneType==="FVG"?"#60a0ff":"#a060ff"}}>{a.htfTF} {a.zoneType}</span>
+                  {a.rsiDiv&&<span style={{fontSize:10,padding:"1px 5px",borderRadius:3,background:"#1a1200",border:"1px solid #5a4a00",color:"#ffaa44"}}>RSI DIV</span>}
                 </div>
                 <a href={a.tvHTF} target="_blank" style={S.tvBtn}>📈 {a.htfTF}</a>
                 <a href={a.tvLTF} target="_blank" style={{...S.tvBtn,borderColor:"#1a5a30",color:"#60e090"}}>📊 {a.ltfTF}</a>
               </div>
+              {(()=>{
+                const g=getGrade(a.score);
+                const isCounter=a.weeklyTrend&&((a.dir==="BULL"&&a.weeklyTrend==="bear")||(a.dir==="BEAR"&&a.weeklyTrend==="bull"));
+                return(
+                  <div style={{display:"flex",alignItems:"center",gap:6,padding:"6px 12px",borderTop:"1px solid #0d2035",flexWrap:"wrap"}}>
+                    <span style={{fontSize:10,fontWeight:700,padding:"2px 9px",borderRadius:4,
+                      background:g.bg,border:`1px solid ${g.border}`,color:g.color}}>{g.label}</span>
+                    {isCounter
+                      ?<span style={{fontSize:10,padding:"2px 8px",borderRadius:3,background:"#1a1a0a",border:"1px solid #5a5a1a",color:"#ffff44",fontWeight:700}}>↺ COUNTER-TREND</span>
+                      :<span style={{fontSize:10,padding:"2px 8px",borderRadius:3,background:"#0a1a0a",border:"1px solid #1a5a1a",color:"#44ff88",fontWeight:700}}>✓ WITH TREND</span>
+                    }
+                    {isCounter&&<span style={{fontSize:9,color:"#7a6a30",fontFamily:"monospace"}}>Maliit na lote lang</span>}
+                  </div>
+                );
+              })()}
               <button onClick={()=>setExpanded(p=>({...p,[i]:!p[i]}))} style={S.expandBtn}>
                 {open?"▲ ITAGO":"▼ IPAKITA"} ANG ZONE PRICES
               </button>
