@@ -94,10 +94,7 @@ async function klines(symbol,tf,limit=50){
   ];
   for(const url of urls){
     try{
-      const ctrl=new AbortController();
-      const t=setTimeout(()=>ctrl.abort(),6000);
-      const r=await fetch(url,{signal:ctrl.signal});
-      clearTimeout(t);
+      const r=await fetch(url);
       if(!r.ok)continue;
       const d=await r.json();
       if(!Array.isArray(d)||d.length<4)continue;
@@ -144,15 +141,16 @@ const ZS={"FVG":20,"OB":10};
 function fvgScore(h,l,z){return(FS[h]||10)+(LS[l]||5)+(ZS[z]||5);}
 
 async function scanFVGLive(symbol){
-  let htfData=null;
+  let hit=null;
   for(const tf of["1W","1D","4H"]){
     const c=await klines(symbol,tf,50);
     if(!c)continue;
     const price=c.at(-1).close;
     const all=[...detectFVG(c),...detectOB(c)];
-    if(all.some(z=>inZone(price,z))){htfData={tf,zones:all,price};break;}
+    const z=all.find(z=>inZone(price,z));
+    if(z){hit={tf,zone:z,price};break;}
   }
-  if(!htfData)return null;
+  if(!hit)return null;
   let ltf=null;
   for(const tf of["1H","30M","15M"]){
     const c=await klines(symbol,tf,20);
@@ -161,16 +159,14 @@ async function scanFVGLive(symbol){
     if(isGRG(c)){ltf={tf,pattern:"GRG",dir:"bear"};break;}
   }
   if(!ltf)return null;
-  const z=htfData.zones.find(z=>inZone(htfData.price,z)&&z.type===ltf.dir);
-  if(!z)return null;
-  const dir=ltf.dir==="bull"?"BULL":"BEAR";
+  const z=hit.zone;
   return{
-    symbol,price:htfData.price,dir,
-    htfTF:htfData.tf,zoneType:z.src,zoneDir:z.type,
+    symbol,price:hit.price,dir:ltf.dir==="bull"?"BULL":"BEAR",
+    htfTF:hit.tf,zoneType:z.src,zoneDir:z.type,
     zoneTop:z.top,zoneBot:z.bot,zoneMid:z.mid,zoneFormed:z.formed_at,
     ltfTF:ltf.tf,pattern:ltf.pattern,inFVG:z.src==="FVG",
-    score:fvgScore(htfData.tf,ltf.tf,z.src),
-    tvHTF:tvLink(symbol,htfData.tf),tvLTF:tvLink(symbol,ltf.tf),
+    score:fvgScore(hit.tf,ltf.tf,z.src),
+    tvHTF:tvLink(symbol,hit.tf),tvLTF:tvLink(symbol,ltf.tf),
   };
 }
 
@@ -364,10 +360,7 @@ function FVGPanel({tgToken,tgChat,bellOn}){
       const sym=WATCHLIST[i];
       setStatus(`Scanning ${sym.replace("USDT","")}…`);
       setCoinSt(p=>({...p,[sym]:"scanning"}));
-      const r=await Promise.race([
-        scanFVGLive(sym),
-        new Promise(res=>setTimeout(()=>res(null),15000))
-      ]);
+      const r=await scanFVGLive(sym);
       if(r){
         found.push(r);
         setAlerts([...found].sort((a,b)=>b.score-a.score));
