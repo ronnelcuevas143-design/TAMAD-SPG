@@ -139,7 +139,7 @@ function hasWick(candle){
   const body=Math.abs(candle.close-candle.open);
   const upper=candle.high-Math.max(candle.close,candle.open);
   const lower=Math.min(candle.close,candle.open)-candle.low;
-  return upper>body*0.05&&lower>body*0.05;
+  return upper>0&&lower>0;
 }
 function isRGR(c){
   const s=c.slice(-3);
@@ -345,6 +345,25 @@ function CoinGrid({coinSt}){
 }
 
 // ═══════════════════════════════════════════
+// FETCH TOP 50 BY VOLUME (excluding favorites)
+// ═══════════════════════════════════════════
+async function fetchTop50(){
+  try{
+    const ctrl=new AbortController();
+    const t=setTimeout(()=>ctrl.abort(),8000);
+    const r=await fetch("https://fapi.binance.com/fapi/v1/ticker/24hr",{signal:ctrl.signal});
+    clearTimeout(t);
+    if(!r.ok)return[];
+    const d=await r.json();
+    return d
+      .filter(x=>x.symbol.endsWith("USDT")&&!WATCHLIST.includes(x.symbol))
+      .sort((a,b)=>parseFloat(b.quoteVolume)-parseFloat(a.quoteVolume))
+      .slice(0,50)
+      .map(x=>x.symbol);
+  }catch{return[];}
+}
+
+// ═══════════════════════════════════════════
 // FVG PANEL
 // ═══════════════════════════════════════════
 function FVGPanel({tgToken,tgChat,bellOn}){
@@ -356,6 +375,8 @@ function FVGPanel({tgToken,tgChat,bellOn}){
   const [filter,setFilter]=useState("ALL");
   const [coinSt,setCoinSt]=useState({});
   const [expanded,setExpanded]=useState({});
+  const [scanMode,setScanMode]=useState("FAV");
+  const [top50List,setTop50List]=useState([]);
   const stopRef=useRef(false);
 
   const runScan=async()=>{
@@ -377,9 +398,17 @@ function FVGPanel({tgToken,tgChat,bellOn}){
       return;
     }
     const found=[];
-    for(let i=0;i<WATCHLIST.length;i++){
+    let scanList=WATCHLIST;
+    if(scanMode==="TOP50"){
+      setStatus("Fetching top 50 by volume…");
+      const t50=await fetchTop50();
+      if(t50.length===0){setScanning(false);setStatus("Failed to fetch top 50. Check connection.");return;}
+      setTop50List(t50);
+      scanList=t50;
+    }
+    for(let i=0;i<scanList.length;i++){
       if(stopRef.current)break;
-      const sym=WATCHLIST[i];
+      const sym=scanList[i];
       setStatus(`Scanning ${sym.replace("USDT","")}…`);
       setCoinSt(p=>({...p,[sym]:"scanning"}));
       const r=await Promise.race([
@@ -394,7 +423,7 @@ function FVGPanel({tgToken,tgChat,bellOn}){
         if(bellOn&&"Notification"in window&&Notification.permission==="granted")
           new Notification(`🎯 ${sym.replace("USDT","")} — ${r.dir}`,{body:`${r.htfTF} ${r.zoneType} | TOP:$${fmt(r.zoneTop)} BOT:$${fmt(r.zoneBot)}`});
       }else{setCoinSt(p=>({...p,[sym]:"fail"}));}
-      setScanned(i+1);setProgress(Math.round(((i+1)/WATCHLIST.length)*100));
+      setScanned(i+1);setProgress(Math.round(((i+1)/scanList.length)*100));
       await new Promise(r=>setTimeout(r,350));
     }
     setScanning(false);setStatus(`Done — ${found.length} signal${found.length!==1?"s":""} found`);
@@ -402,6 +431,7 @@ function FVGPanel({tgToken,tgChat,bellOn}){
 
   const bull=alerts.filter(a=>a.dir==="BULL").length;
   const bear=alerts.filter(a=>a.dir==="BEAR").length;
+  const activeList=scanMode==="TOP50"&&top50List.length>0?top50List:WATCHLIST;
   const show=filter==="ALL"?alerts:filter==="BULL"?alerts.filter(a=>a.dir==="BULL"):alerts.filter(a=>a.dir==="BEAR");
 
   return(
@@ -409,6 +439,19 @@ function FVGPanel({tgToken,tgChat,bellOn}){
       {DEMO_MODE&&<div style={{background:"#1a1200",border:"1px solid #5a3a00",borderRadius:7,padding:"8px 12px",marginBottom:10,fontSize:11,color:"#f59e0b",fontFamily:"monospace"}}>
         🟡 DEMO MODE — Peke lang ang data. Palitan ng <b>DEMO_MODE = false</b> para sa live.
       </div>}
+      {/* SCAN MODE SELECTOR */}
+      <div style={{display:"flex",gap:6,marginBottom:10}}>
+        {[{k:"FAV",l:"⭐ FAVORITES (19)"},
+          {k:"TOP50",l:"🔥 TOP 50 VOL"}].map(m=>(
+          <button key={m.k} onClick={()=>{if(!scanning){setScanMode(m.k);setAlerts([]);setCoinSt({});setScanned(0);setProgress(0);setStatus("");setTop50List([]);}}}
+            style={{flex:1,padding:"8px 4px",borderRadius:6,border:`1px solid ${scanMode===m.k?"#00e5ff":"#1a3a5a"}`,
+              background:scanMode===m.k?"#0a2a3a":"#060e18",
+              color:scanMode===m.k?"#00e5ff":"#2a5a7a",
+              fontSize:11,fontWeight:700,letterSpacing:0.5,cursor:"pointer"}}>
+            {m.l}
+          </button>
+        ))}
+      </div>
       <div style={S.controls}>
         <button style={{...S.scanBtn,opacity:scanning?0.6:1}} onClick={runScan} disabled={scanning}>
           {scanning?<span>⟳ SCANNING…</span>:"▶ SCAN NOW"}
@@ -418,7 +461,7 @@ function FVGPanel({tgToken,tgChat,bellOn}){
       <div style={S.progressWrap}><div style={{...S.progressBar,width:`${progress}%`}}/></div>
       <div style={S.statsRow}>
         {[{l:"SETUPS",v:alerts.length,c:"#00e5ff"},{l:"BULLISH",v:bull,c:"#22c55e"},
-          {l:"BEARISH",v:bear,c:"#ef4444"},{l:"SCANNED",v:`${scanned}/${WATCHLIST.length}`,c:"#94a3b8"}].map(s=>(
+          {l:"BEARISH",v:bear,c:"#ef4444"},{l:"SCANNED",v:`${scanned}/${activeList.length}`,c:"#94a3b8"}].map(s=>(
           <div key={s.l} style={S.stat}>
             <div style={{fontSize:24,fontWeight:700,color:s.c,fontFamily:"monospace"}}>{s.v}</div>
             <div style={{fontSize:9,letterSpacing:1.5,color:"#2a5a7a",marginTop:2}}>{s.l}</div>
@@ -562,7 +605,7 @@ function SweepPanel({tgToken,tgChat,bellOn}){
       <div style={S.progressWrap}><div style={{...S.progressBar,width:`${progress}%`,background:"#00aa60"}}/></div>
       <div style={S.statsRow}>
         {[{l:"SETUPS",v:alerts.length,c:"#00ff88"},{l:"BULLISH",v:bull,c:"#22c55e"},
-          {l:"BEARISH",v:bear,c:"#ef4444"},{l:"SCANNED",v:`${scanned}/${WATCHLIST.length}`,c:"#94a3b8"}].map(s=>(
+          {l:"BEARISH",v:bear,c:"#ef4444"},{l:"SCANNED",v:`${scanned}/${activeList.length}`,c:"#94a3b8"}].map(s=>(
           <div key={s.l} style={S.stat}>
             <div style={{fontSize:24,fontWeight:700,color:s.c,fontFamily:"monospace"}}>{s.v}</div>
             <div style={{fontSize:9,letterSpacing:1.5,color:"#2a5a7a",marginTop:2}}>{s.l}</div>
