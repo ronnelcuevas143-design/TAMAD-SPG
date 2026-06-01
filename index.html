@@ -94,7 +94,10 @@ async function klines(symbol,tf,limit=50){
   ];
   for(const url of urls){
     try{
-      const r=await fetch(url);
+      const ctrl=new AbortController();
+      const t=setTimeout(()=>ctrl.abort(),6000);
+      const r=await fetch(url,{signal:ctrl.signal});
+      clearTimeout(t);
       if(!r.ok)continue;
       const d=await r.json();
       if(!Array.isArray(d)||d.length<4)continue;
@@ -132,8 +135,26 @@ function detectOB(c){
 function inZone(price,z,buf=0.003){
   return price>=z.bot*(1-buf)&&price<=z.top*(1+buf);
 }
-function isRGR(c){const s=c.slice(-4);return s[0].close<s[1].close&&s[1].close>s[2].close&&s[2].close<s[3].close;}
-function isGRG(c){const s=c.slice(-4);return s[0].close>s[1].close&&s[1].close<s[2].close&&s[2].close>s[3].close;}
+function hasWick(candle){
+  const body=Math.abs(candle.close-candle.open);
+  const upper=candle.high-Math.max(candle.close,candle.open);
+  const lower=Math.min(candle.close,candle.open)-candle.low;
+  return upper>body*0.05&&lower>body*0.05;
+}
+function isRGR(c){
+  const s=c.slice(-3);
+  const [c1,c2,c3]=s;
+  const colorOk=c1.close<c1.open&&c2.close>c2.open&&c3.close<c3.open;
+  const wickOk=hasWick(c1)&&hasWick(c2)&&hasWick(c3);
+  return colorOk&&wickOk;
+}
+function isGRG(c){
+  const s=c.slice(-3);
+  const [c1,c2,c3]=s;
+  const colorOk=c1.close>c1.open&&c2.close<c2.open&&c3.close>c3.open;
+  const wickOk=hasWick(c1)&&hasWick(c2)&&hasWick(c3);
+  return colorOk&&wickOk;
+}
 
 const FS={"1W":40,"1D":30,"4H":20};
 const LS={"1H":20,"30M":15,"15M":10};
@@ -141,16 +162,15 @@ const ZS={"FVG":20,"OB":10};
 function fvgScore(h,l,z){return(FS[h]||10)+(LS[l]||5)+(ZS[z]||5);}
 
 async function scanFVGLive(symbol){
-  let hit=null;
+  let htfData=null;
   for(const tf of["1W","1D","4H"]){
     const c=await klines(symbol,tf,50);
     if(!c)continue;
     const price=c.at(-1).close;
     const all=[...detectFVG(c),...detectOB(c)];
-    const z=all.find(z=>inZone(price,z));
-    if(z){hit={tf,zone:z,price};break;}
+    if(all.some(z=>inZone(price,z))){htfData={tf,zones:all,price};break;}
   }
-  if(!hit)return null;
+  if(!htfData)return null;
   let ltf=null;
   for(const tf of["1H","30M","15M"]){
     const c=await klines(symbol,tf,20);
@@ -159,14 +179,16 @@ async function scanFVGLive(symbol){
     if(isGRG(c)){ltf={tf,pattern:"GRG",dir:"bear"};break;}
   }
   if(!ltf)return null;
-  const z=hit.zone;
+  const z=htfData.zones.find(z=>inZone(htfData.price,z)&&z.type===ltf.dir);
+  if(!z)return null;
+  const dir=ltf.dir==="bull"?"BULL":"BEAR";
   return{
-    symbol,price:hit.price,dir:ltf.dir==="bull"?"BULL":"BEAR",
-    htfTF:hit.tf,zoneType:z.src,zoneDir:z.type,
+    symbol,price:htfData.price,dir,
+    htfTF:htfData.tf,zoneType:z.src,zoneDir:z.type,
     zoneTop:z.top,zoneBot:z.bot,zoneMid:z.mid,zoneFormed:z.formed_at,
     ltfTF:ltf.tf,pattern:ltf.pattern,inFVG:z.src==="FVG",
-    score:fvgScore(hit.tf,ltf.tf,z.src),
-    tvHTF:tvLink(symbol,hit.tf),tvLTF:tvLink(symbol,ltf.tf),
+    score:fvgScore(htfData.tf,ltf.tf,z.src),
+    tvHTF:tvLink(symbol,htfData.tf),tvLTF:tvLink(symbol,ltf.tf),
   };
 }
 
@@ -360,7 +382,10 @@ function FVGPanel({tgToken,tgChat,bellOn}){
       const sym=WATCHLIST[i];
       setStatus(`Scanning ${sym.replace("USDT","")}…`);
       setCoinSt(p=>({...p,[sym]:"scanning"}));
-      const r=await scanFVGLive(sym);
+      const r=await Promise.race([
+        scanFVGLive(sym),
+        new Promise(res=>setTimeout(()=>res(null),10000))
+      ]);
       if(r){
         found.push(r);
         setAlerts([...found].sort((a,b)=>b.score-a.score));
