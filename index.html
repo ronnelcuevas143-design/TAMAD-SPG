@@ -353,14 +353,29 @@ async function fetchTop50(){
     const t=setTimeout(()=>ctrl.abort(),8000);
     const r=await fetch("https://fapi.binance.com/fapi/v1/ticker/24hr",{signal:ctrl.signal});
     clearTimeout(t);
-    if(!r.ok)return[];
+    if(!r.ok)throw new Error();
     const d=await r.json();
     return d
       .filter(x=>x.symbol.endsWith("USDT")&&!WATCHLIST.includes(x.symbol))
       .sort((a,b)=>parseFloat(b.quoteVolume)-parseFloat(a.quoteVolume))
       .slice(0,50)
       .map(x=>x.symbol);
-  }catch{return[];}
+  }catch{
+    // fallback to spot API
+    try{
+      const ctrl2=new AbortController();
+      const t2=setTimeout(()=>ctrl2.abort(),8000);
+      const r2=await fetch("https://api.binance.com/api/v3/ticker/24hr",{signal:ctrl2.signal});
+      clearTimeout(t2);
+      if(!r2.ok)return[];
+      const d2=await r2.json();
+      return d2
+        .filter(x=>x.symbol.endsWith("USDT")&&!WATCHLIST.includes(x.symbol))
+        .sort((a,b)=>parseFloat(b.quoteVolume)-parseFloat(a.quoteVolume))
+        .slice(0,50)
+        .map(x=>x.symbol);
+    }catch{return[];}
+  }
 }
 
 // ═══════════════════════════════════════════
@@ -605,7 +620,7 @@ function SweepPanel({tgToken,tgChat,bellOn}){
       <div style={S.progressWrap}><div style={{...S.progressBar,width:`${progress}%`,background:"#00aa60"}}/></div>
       <div style={S.statsRow}>
         {[{l:"SETUPS",v:alerts.length,c:"#00ff88"},{l:"BULLISH",v:bull,c:"#22c55e"},
-          {l:"BEARISH",v:bear,c:"#ef4444"},{l:"SCANNED",v:`${scanned}/${activeList.length}`,c:"#94a3b8"}].map(s=>(
+          {l:"BEARISH",v:bear,c:"#ef4444"},{l:"SCANNED",v:`${scanned}/${WATCHLIST.length}`,c:"#94a3b8"}].map(s=>(
           <div key={s.l} style={S.stat}>
             <div style={{fontSize:24,fontWeight:700,color:s.c,fontFamily:"monospace"}}>{s.v}</div>
             <div style={{fontSize:9,letterSpacing:1.5,color:"#2a5a7a",marginTop:2}}>{s.l}</div>
