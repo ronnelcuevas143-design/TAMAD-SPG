@@ -185,11 +185,11 @@ async function scanFVGLive(symbol){
       if(z.type!==dir)return false;
       const s=c.slice(-3);
       if(dir==="bull"){
-        // Any of 3 candles lower wick touches bull zone
-        return s.some(candle=>candle.low<=z.top*(1.003)&&candle.low>=z.bot*(0.997));
+        // Bull: lower wick reaches zone BOT (price came down to support)
+        return s.some(candle=>candle.low<=z.top*1.005&&candle.low>=z.bot*0.995);
       }else{
-        // Any of 3 candles upper wick touches bear zone
-        return s.some(candle=>candle.high>=z.bot*(0.997)&&candle.high<=z.top*(1.003));
+        // Bear: upper wick reaches zone TOP (price came up to resistance)
+        return s.some(candle=>candle.high>=z.bot*0.995&&candle.high<=z.top*1.005);
       }
     });
     if(matchedZone){ltf={tf,pattern:rgr?"RGR":"GRG",dir,zone:matchedZone};break;}
