@@ -144,16 +144,12 @@ function hasWick(candle){
 function isRGR(c){
   const s=c.slice(-3);
   const [c1,c2,c3]=s;
-  const colorOk=c1.close<c1.open&&c2.close>c2.open&&c3.close<c3.open;
-  const wickOk=hasWick(c1)&&hasWick(c2)&&hasWick(c3);
-  return colorOk&&wickOk;
+  return c1.close<c1.open&&c2.close>c2.open&&c3.close<c3.open;
 }
 function isGRG(c){
   const s=c.slice(-3);
   const [c1,c2,c3]=s;
-  const colorOk=c1.close>c1.open&&c2.close<c2.open&&c3.close>c3.open;
-  const wickOk=hasWick(c1)&&hasWick(c2)&&hasWick(c3);
-  return colorOk&&wickOk;
+  return c1.close>c1.open&&c2.close<c2.open&&c3.close>c3.open;
 }
 
 const FS={"1W":40,"1D":30,"4H":20};
@@ -162,25 +158,45 @@ const ZS={"FVG":20,"OB":10};
 function fvgScore(h,l,z){return(FS[h]||10)+(LS[l]||5)+(ZS[z]||5);}
 
 async function scanFVGLive(symbol){
+  // HTF: collect all zones
   let htfData=null;
   for(const tf of["1W","1D","4H"]){
     const c=await klines(symbol,tf,50);
     if(!c)continue;
     const price=c.at(-1).close;
     const all=[...detectFVG(c),...detectOB(c)];
-    if(all.some(z=>inZone(price,z))){htfData={tf,zones:all,price};break;}
+    if(all.length>0){htfData={tf,zones:all,price};break;}
   }
   if(!htfData)return null;
+
+  // LTF: get pattern + check wick touch on zone
   let ltf=null;
   for(const tf of["1H","30M","15M"]){
     const c=await klines(symbol,tf,20);
     if(!c)continue;
-    if(isRGR(c)){ltf={tf,pattern:"RGR",dir:"bull"};break;}
-    if(isGRG(c)){ltf={tf,pattern:"GRG",dir:"bear"};break;}
+    const last=c.at(-1);
+    const rgr=isRGR(c);
+    const grg=isGRG(c);
+    if(!rgr&&!grg)continue;
+
+    const dir=rgr?"bull":"bear";
+    // Check wick touch: bull = lower wick touches zone bot/top, bear = upper wick touches zone top
+    const matchedZone=htfData.zones.find(z=>{
+      if(z.type!==dir)return false;
+      const s=c.slice(-3);
+      if(dir==="bull"){
+        // Any of 3 candles lower wick touches bull zone
+        return s.some(candle=>candle.low<=z.top*(1.003)&&candle.low>=z.bot*(0.997));
+      }else{
+        // Any of 3 candles upper wick touches bear zone
+        return s.some(candle=>candle.high>=z.bot*(0.997)&&candle.high<=z.top*(1.003));
+      }
+    });
+    if(matchedZone){ltf={tf,pattern:rgr?"RGR":"GRG",dir,zone:matchedZone};break;}
   }
   if(!ltf)return null;
-  const z=htfData.zones.find(z=>inZone(htfData.price,z)&&z.type===ltf.dir);
-  if(!z)return null;
+
+  const z=ltf.zone;
   const dir=ltf.dir==="bull"?"BULL":"BEAR";
   return{
     symbol,price:htfData.price,dir,
@@ -422,7 +438,7 @@ function FVGPanel({tgToken,tgChat,bellOn}){
       setCoinSt(p=>({...p,[sym]:"scanning"}));
       const r=await Promise.race([
         scanFVGLive(sym),
-        new Promise(res=>setTimeout(()=>res(null),10000))
+        new Promise(res=>setTimeout(()=>res(null),5000))
       ]);
       if(r){
         found.push(r);
